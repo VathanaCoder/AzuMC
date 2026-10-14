@@ -6,13 +6,13 @@
 window.AZUMC_MODS = [
     {
       id: "actions-stuff",
-      name: "Actions&Stuff",
+      name: "Actions Stuff",
       category: "Resource Packs",
       version: "1.1.12",
       minecraft: "1.26+",
       author: "Unknown",
-      summary: "Actions&Stuff 1.12",
-      description: "Actions&Stuff 1.12 resource pack for Minecraft Bedrock.",
+      summary: "Actions Stuff 1.12",
+      description: "Actions Stuff 1.12 resource pack for Minecraft Bedrock.",
       image: "assets/mods/actions-stuff.jpg",
       alt: "Actions & Stuff cover art with yellow title, a builder, a cat, a chicken and a player holding an axolotl.",
       shots: [
@@ -108,7 +108,7 @@ window.AZUMC_MODS = [
     {
       id: "creepy-plushies",
       name: "Creepy Plushies",
-      category: "Add-ons",
+      category: "Horror",
       version: "1.0",
       minecraft: "1.26+",
       author: "Unknown",
