@@ -5,27 +5,9 @@
   if (window.__AZUMC_BOOTED__) return;
   window.__AZUMC_BOOTED__ = true;
 
-  /**
-   * Reserved task links for a future timed download flow.
-   * Not rendered while downloads are disabled.
-   * The countdown is only a wait. It must never claim to check likes, follows, or subscriptions.
-   */
-  var TIKTOK_TASK_LINKS = [
-    "https://vt.tiktok.com/ZSbomQ4y6/",
-    "https://vt.tiktok.com/ZSbomaSnd/",
-    "https://vt.tiktok.com/ZSbom4xys/",
-    "https://vt.tiktok.com/ZSbom6tdW/",
-    "https://vt.tiktok.com/ZSbomHdrB/",
-    "https://vt.tiktok.com/ZSbomVSsq/",
-    "https://vt.tiktok.com/ZSbomuRtd/",
-    "https://vt.tiktok.com/ZSbomrjut/",
-    "https://vt.tiktok.com/ZSbomCvU4/"
-  ];
-
   var DOWNLOAD_SYSTEM = {
     enabled: true,
-    countdownSeconds: 10,
-    taskLinks: TIKTOK_TASK_LINKS,
+    prepareSeconds: 3,
     extensions: [".mcaddon", ".mcpack", ".mcworld", ".mctemplate", ".zip"]
   };
 
@@ -99,26 +81,13 @@
     return clean.slice(-ext.length) === ext;
   }
 
-  function tasksFor(mod) {
-    if (mod.tasks && mod.tasks.length) {
-      return mod.tasks.map(function (task, i) {
-        return { n: i + 1, url: task.url, label: task.label || ("Task " + (i + 1)) };
-      });
-    }
-    var count = Math.max(0, Math.min(DOWNLOAD_SYSTEM.taskLinks.length, mod.taskCount || DOWNLOAD_SYSTEM.taskLinks.length));
-    return DOWNLOAD_SYSTEM.taskLinks.slice(0, count).map(function (url, i) {
-      return { n: i + 1, url: url, label: "Task " + (i + 1) };
-    });
-  }
-
   function planDownload(mod) {
     if (!isDownloadAvailable(mod)) {
       return { ok: false, message: "Download coming soon — this file isn’t available yet." };
     }
     return {
       ok: true,
-      countdownSeconds: DOWNLOAD_SYSTEM.countdownSeconds,
-      tasks: tasksFor(mod),
+      prepareSeconds: DOWNLOAD_SYSTEM.prepareSeconds,
       file: mod.file
     };
   }
@@ -352,46 +321,45 @@
         "</div>";
       return;
     }
+    var fileName = String(plan.file.url).split("?")[0].split("/").pop();
     el.innerHTML =
-      '<section class="task-panel">' +
-        "<h3>File tasks</h3>" +
-        "<p>Open any of the links if you want, then start the timer. The countdown is only a wait — it does not check likes, follows, or subscriptions.</p>" +
-        '<ol class="task-list">' +
-          plan.tasks.map(function (task) {
-            return '<li><a class="btn btn-ghost" href="' + esc(task.url) + '" target="_blank" rel="noopener noreferrer">Open task ' + task.n + "</a></li>";
-          }).join("") +
-        "</ol>" +
-        '<button type="button" class="btn" data-start-timer>Start ' + plan.countdownSeconds + "s timer</button>" +
+      '<section class="task-panel download-panel">' +
+        "<h3>Download</h3>" +
+        "<p>" + esc(mod.name) + " · " + esc(mod.fileSize) + " · " + esc(plan.file.ext) + "</p>" +
+        '<button type="button" class="btn" data-download>Download</button>' +
         '<div class="progress" hidden><span></span></div>' +
         '<p class="timer-status" role="status"></p>' +
-        '<p data-file-ready hidden><a class="btn" href="' + esc(plan.file.url) + '">Save ' + esc(plan.file.name || "file") + "</a></p>" +
       "</section>";
-    var start = el.querySelector("[data-start-timer]");
+    var btn = el.querySelector("[data-download]");
     var bar = el.querySelector(".progress");
     var barSpan = bar.querySelector("span");
     var status = el.querySelector(".timer-status");
-    var ready = el.querySelector("[data-file-ready]");
-    start.addEventListener("click", function () {
-      if (start.dataset.running === "1") return;
-      start.dataset.running = "1";
-      start.disabled = true;
+    btn.addEventListener("click", function () {
+      if (btn.dataset.running === "1") return;
+      btn.dataset.running = "1";
+      btn.disabled = true;
       bar.hidden = false;
-      var total = plan.countdownSeconds;
-      var left = total;
-      status.textContent = "Waiting " + left + "s. This does not verify any social action.";
       barSpan.style.width = "0%";
+      status.textContent = "Preparing your download…";
+      var total = plan.prepareSeconds * 10;
+      var step = 0;
       var timer = setInterval(function () {
-        left -= 1;
-        barSpan.style.width = Math.min(100, ((total - Math.max(left, 0)) / total) * 100) + "%";
-        if (left <= 0) {
-          clearInterval(timer);
-          status.textContent = "Timer finished. Your file link is ready.";
-          ready.hidden = false;
-          start.hidden = true;
-          return;
-        }
-        status.textContent = "Waiting " + left + "s. This does not verify any social action.";
-      }, 1000);
+        step += 1;
+        barSpan.style.width = Math.min(100, (step / total) * 100) + "%";
+        if (step < total) return;
+        clearInterval(timer);
+        var link = document.createElement("a");
+        link.href = plan.file.url;
+        link.download = fileName;
+        link.rel = "noopener";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        status.textContent = "Your download has started.";
+        btn.textContent = "Download again";
+        btn.disabled = false;
+        btn.dataset.running = "0";
+      }, 100);
       downloadTimers.push(timer);
     });
   }
