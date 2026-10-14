@@ -88,7 +88,7 @@ window.AZUMC_MODS = [
     {
       id: "farm-life",
       name: "Farm Life",
-      category: "Mods",
+      category: "Add-ons",
       version: "1.0",
       minecraft: "1.26+",
       author: "Unknown",
@@ -99,7 +99,7 @@ window.AZUMC_MODS = [
       shots: [
         { src: "assets/mods/farm-life.jpg", alt: "Farm Life scene with a red barn, a blue farmhouse, a tractor and crop fields." }
       ],
-      fileSize: "24.25 MB",
+      fileSize: "20.27 MB",
       released: "2026-10-14",
       status: "Released",
       featured: true,
