@@ -15,7 +15,7 @@
 
   var FAV_KEY = "azumc-favorites";
   var THEME_KEY = "azumc-theme";
-  var state = { query: "", category: "All", sort: "newest" };
+  var state = { query: "", category: "All", sort: "relevance" };
   var CATEGORIES = ["Mods", "Add-ons", "Horror", "Resource Packs", "Behavior Packs", "Maps", "Skins"];
   var favs = loadFavs();
   var toastTimer = 0;
@@ -125,23 +125,57 @@
     });
   }
 
-  function sortList(list) {
-    var out = list.slice();
-    if (state.sort === "oldest") out.sort(function (a, b) { return byDate(b, a); });
-    else if (state.sort === "name") out.sort(function (a, b) { return a.name.localeCompare(b.name); });
-    else out.sort(byDate);
-    return out;
+  function termScore(mod, t) {
+    var name = String(mod.name).toLowerCase();
+    var words = name.split(/[\s&\-]+/);
+    var startsWord = function (list) { return list.some(function (w) { return w.indexOf(t) === 0; }); };
+    if (name.indexOf(t) === 0) return 100;
+    if (startsWord(words)) return 80;
+    if (t.length >= 3 && name.indexOf(t) !== -1) return 60;
+    var meta = [mod.author, mod.category, mod.version, mod.minecraft].join(" ").toLowerCase();
+    if (startsWord(meta.split(/[\s&\-]+/))) return 50;
+    if (t.length >= 3 && meta.indexOf(t) !== -1) return 40;
+    if (t.length >= 3) {
+      var text = (String(mod.summary) + " " + String(mod.description)).toLowerCase().split(/[^a-z0-9.+]+/);
+      if (startsWord(text)) return 20;
+    }
+    return 0;
+  }
+
+  function scoreMod(mod, q) {
+    var total = 0;
+    var terms = q.split(/\s+/).filter(Boolean);
+    for (var i = 0; i < terms.length; i++) {
+      var sc = termScore(mod, terms[i]);
+      if (!sc) return 0;
+      total += sc;
+    }
+    return total;
   }
 
   function filtered() {
     var q = state.query.trim().toLowerCase();
+    var scored = {};
     var list = MODS.filter(function (mod) {
       if (state.category !== "All" && mod.category !== state.category) return false;
       if (!q) return true;
-      var hay = [mod.name, mod.description, mod.summary, mod.category, mod.author, mod.version, mod.minecraft].join(" ").toLowerCase();
-      return hay.indexOf(q) !== -1;
+      scored[mod.id] = scoreMod(mod, q);
+      return scored[mod.id] > 0;
     });
-    return sortList(list);
+    if (state.sort === "oldest") list.sort(function (a, b) { return byDate(b, a); });
+    else if (state.sort === "name") list.sort(function (a, b) { return a.name.localeCompare(b.name); });
+    else if (state.sort === "relevance" && q) list.sort(function (a, b) { return (scored[b.id] - scored[a.id]) || byDate(a, b); });
+    else list.sort(byDate);
+    return list;
+  }
+
+  function updateChips() {
+    document.querySelectorAll("[data-filter]").forEach(function (chip) {
+      var cat = chip.getAttribute("data-filter");
+      if (cat === "All") return;
+      var has = MODS.some(function (m) { return m.category === cat; });
+      chip.hidden = !has;
+    });
   }
 
   function isIdle() {
@@ -310,7 +344,7 @@
   }
 
   function renderDownloadSlot(el, mod) {
-    downloadTimers.forEach(clearInterval);
+    downloadTimers.forEach(function (t) { if (t && t.cancel) t.cancel(); else clearInterval(t); });
     downloadTimers = [];
     var plan = planDownload(mod);
     if (!plan.ok) {
@@ -334,20 +368,26 @@
     var bar = el.querySelector(".progress");
     var barSpan = bar.querySelector("span");
     var status = el.querySelector(".timer-status");
+    var raf = 0;
     btn.addEventListener("click", function () {
       if (btn.dataset.running === "1") return;
       btn.dataset.running = "1";
       btn.disabled = true;
+      btn.textContent = "Preparing…";
       bar.hidden = false;
-      barSpan.style.width = "0%";
-      status.textContent = "Preparing your download…";
-      var total = plan.prepareSeconds * 10;
-      var step = 0;
-      var timer = setInterval(function () {
-        step += 1;
-        barSpan.style.width = Math.min(100, (step / total) * 100) + "%";
-        if (step < total) return;
-        clearInterval(timer);
+      barSpan.style.transform = "scaleX(0)";
+      var duration = Math.max(1, plan.prepareSeconds) * 1000;
+      var startAt = 0;
+      var ease = function (t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
+
+      function frame(now) {
+        if (!startAt) startAt = now;
+        var t = Math.min(1, (now - startAt) / duration);
+        var p = ease(t);
+        barSpan.style.transform = "scaleX(" + p.toFixed(4) + ")";
+        var pct = Math.round(p * 100);
+        status.textContent = (p < 0.4 ? "Preparing your download…" : p < 0.85 ? "Packing your file…" : "Almost ready…") + " " + pct + "%";
+        if (t < 1) { raf = requestAnimationFrame(frame); return; }
         var link = document.createElement("a");
         link.href = plan.file.url;
         link.download = fileName;
@@ -359,8 +399,10 @@
         btn.textContent = "Download again";
         btn.disabled = false;
         btn.dataset.running = "0";
-      }, 100);
-      downloadTimers.push(timer);
+        setTimeout(function () { bar.hidden = true; barSpan.style.transform = "scaleX(0)"; }, 1200);
+      }
+      raf = requestAnimationFrame(frame);
+      downloadTimers.push({ cancel: function () { cancelAnimationFrame(raf); } });
     });
   }
 
@@ -860,6 +902,7 @@
 
   renderHero();
   renderHome();
+  updateChips();
   renderSearch();
   paintHearts();
   applyTheme(currentTheme());

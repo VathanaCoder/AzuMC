@@ -478,7 +478,7 @@ html[data-theme="light"] .icon-moon { display: block; }
 }
 .card-media {
   position: relative;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 16 / 9;
   background: var(--surface-2);
   overflow: hidden;
 }
@@ -643,7 +643,7 @@ html[data-theme="light"] .fav {
   background: var(--surface-2);
   cursor: zoom-in;
 }
-.detail-shot img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
+.detail-shot img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
 .detail-title {
   display: flex;
   flex-wrap: wrap;
@@ -699,7 +699,7 @@ html[data-theme="light"] .fav {
   background: var(--surface);
   cursor: zoom-in;
 }
-.shot img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
+.shot img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
 .shot figcaption, .gallery-note { color: var(--muted); font-size: 0.85rem; margin-top: 8px; }
 
 .related { margin-top: 28px; }
@@ -724,9 +724,16 @@ html[data-theme="light"] .fav {
 .progress span {
   display: block;
   height: 100%;
-  width: 0;
+  width: 100%;
   background: var(--azure-strong);
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
+  border-radius: inherit;
 }
+.progress:not([hidden]) { animation: rise 0.25s ease both; }
+.download-panel .btn[disabled] { opacity: 0.75; cursor: progress; }
+.download-panel .timer-status { min-height: 1.4em; font-variant-numeric: tabular-nums; }
 
 /* Settings + pages */
 .block-title { margin: 22px 0 10px; font-size: 1rem; }
@@ -1068,7 +1075,7 @@ html[data-theme="light"] .section-tint { background: color-mix(in srgb, var(--su
 /* Single-item shelf (Horror) uses a wide spotlight card */
 @media (min-width: 700px) {
   .card-wide { flex-direction: row; align-items: stretch; }
-  .card-wide .card-media { flex: 0 0 46%; aspect-ratio: 16 / 10; align-self: center; margin: 10px 0 10px 10px; }
+  .card-wide .card-media { flex: 0 0 46%; aspect-ratio: 16 / 9; align-self: center; margin: 10px 0 10px 10px; }
   .card-wide .card-body { align-content: center; gap: 8px; padding: 18px 22px; }
   .card-wide h3 { font-size: 1.35rem; }
   .card-wide .excerpt { -webkit-line-clamp: 3; font-size: 1rem; }
@@ -1145,3 +1152,5 @@ html[data-theme="light"] .section-tint { background: color-mix(in srgb, var(--su
     scroll-behavior: auto !important;
   }
 }
+
+.chip[hidden] { display: none; }
