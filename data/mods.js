@@ -18,7 +18,7 @@ window.AZUMC_MODS = [
       shots: [
         { src: "assets/mods/actions-stuff.jpg", alt: "Actions & Stuff cover art with yellow title, a builder, a cat, a chicken and a player holding an axolotl." }
       ],
-      fileSize: "27.29 MB",
+      fileSize: "21.41 MB",
       released: "2026-10-14",
       status: "Released",
       featured: false,
