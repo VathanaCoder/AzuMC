@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("azumc-theme");
+        if (t !== "light" && t !== "dark") t = "dark";
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AzuMC — Minecraft Mods & Add-ons</title>
+  <meta name="description" content="AzuMC is a premium catalog of Minecraft Bedrock mods and add-ons by Vathana.">
+  <meta name="theme-color" content="#0f1a2b">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="azumc">
+    <a class="skip" href="#content">Skip to content</a>
+
+    <header class="site-header">
+      <div class="wrap header-bar">
+        <a class="brand" href="#/" aria-label="AzuMC home">
+          <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+            <path fill="currentColor" d="M16.2 2.2 30.2 29h-5.6l-2.8-5.8H10.2L7.4 29H1.8L15.8 2.2h.4Zm-.2 11.4-3.9 8h7.8l-3.9-8Z"/>
+          </svg>
+          <span class="brand-name"><span>A</span>zuMC</span>
+        </a>
+
+        <div class="header-tools">
+          <a class="icon-btn" href="#/search" data-header-search aria-label="Open search">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.25" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 16.5 20 20.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </a>
+          <button type="button" class="icon-btn" data-theme-toggle aria-label="Switch to light mode">
+            <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.4" fill="none" stroke="currentColor" stroke-width="1.8"/><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4 17 7M7 17l-1.6 1.6"/></svg>
+            <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.6 3.2a8.1 8.1 0 1 0 5.2 13.5A7.1 7.1 0 0 1 15.6 3.2Z"/></svg>
+          </button>
+        </div>
+      </div>
+      </header>
+
+    <main id="content">
+      <div id="view-home">
+        <section class="hero">
+          <div class="wrap hero-grid">
+            <div class="hero-copy">
+              <p class="eyebrow">Minecraft Bedrock · mods &amp; add-ons</p>
+              <h1>Upgrade Your Minecraft.</h1>
+              <p class="lede">Discover new adventures, creative addons, and unforgettable Minecraft experiences.</p>
+              <div class="hero-actions">
+                <a class="btn" href="#featured">Explore featured</a>
+                <a class="btn btn-ghost" href="#/search">Browse all</a>
+              </div>
+              
+            </div>
+            <div class="hero-aside">
+              <figure class="brand-plate">
+                <img src="assets/logo-lockup.png" alt="AzuMC wordmark. Minecraft mods and add-ons." width="960" height="540">
+              </figure>
+              <div id="hero-feature"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="featured" aria-labelledby="featured-heading">
+          <div class="wrap">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Editor’s picks</p>
+                <h2 id="featured-heading">Featured content</h2>
+              </div>
+              <div class="carousel-nav">
+                <button type="button" class="icon-btn" data-carousel="-1" aria-label="Previous featured">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6 8.5 12l6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <button type="button" class="icon-btn" data-carousel="1" aria-label="Next featured">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
+            </div>
+            <div id="featured-track" class="carousel-track" data-track tabindex="0" aria-roledescription="carousel" aria-label="Featured content"></div>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="rec-heading">
+          <div class="wrap">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Curated mix</p>
+                <h2 id="rec-heading">Recommended for you</h2>
+              </div>
+            </div>
+            <div id="home-recommended" class="mod-grid"></div>
+          </div>
+        </section>
+
+        <section class="section section-tint" aria-labelledby="horror-heading">
+          <div class="wrap">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">After dark</p>
+                <h2 id="horror-heading">Horror collection</h2>
+              </div>
+              <a class="text-link" href="#/search?cat=Horror">See all</a>
+            </div>
+            <div id="home-horror" class="mod-grid"></div>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="packs-heading">
+          <div class="wrap">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Look &amp; feel</p>
+                <h2 id="packs-heading">Resource packs</h2>
+              </div>
+              <a class="text-link" href="#/search?cat=Resource%20Packs">See all</a>
+            </div>
+            <div id="home-packs" class="mod-grid"></div>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="cat-heading">
+          <div class="wrap">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Jump in</p>
+                <h2 id="cat-heading">Popular categories</h2>
+              </div>
+            </div>
+            <ul class="cat-row"><li><a class="cat-tile" href="#/search?cat=Add-ons" data-cat-tile="Add-ons"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M8.5 4.5h4l2 2H19a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 18.5H5A1.5 1.5 0 0 1 3.5 17V6A1.5 1.5 0 0 1 5 4.5h3.5Z"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M8 12.5h8"/></svg><span>Add-ons</span><small class="cat-count" data-count-for="Add-ons"></small></a></li><li><a class="cat-tile" href="#/search?cat=Mods" data-cat-tile="Mods"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M12 3.5 20 8v8l-8 4.5L4 16V8l8-4.5Z"/><path fill="none" stroke="currentColor" stroke-width="1.8" d="M12 12.2 20 8M12 12.2 4 8M12 12.2V20"/></svg><span>Mods</span><small class="cat-count" data-count-for="Mods"></small></a></li><li><a class="cat-tile" href="#/search?cat=Horror" data-cat-tile="Horror"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.2 3.4A8 8 0 1 0 20.4 16 6.6 6.6 0 0 1 15.2 3.4Z"/></svg><span>Horror</span><small class="cat-count" data-count-for="Horror"></small></a></li><li><a class="cat-tile" href="#/search?cat=Resource%20Packs" data-cat-tile="Resource Packs"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="none" stroke="currentColor" stroke-width="1.8" d="m8 15 2.2-2.6 2 1.8L16.5 9"/></svg><span>Resource Packs</span><small class="cat-count" data-count-for="Resource Packs"></small></a></li><li><a class="cat-tile" href="#/search?cat=Behavior%20Packs" data-cat-tile="Behavior Packs"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M12 4 5 7.2v5.2c0 3.6 2.8 6.2 7 7.6 4.2-1.4 7-4 7-7.6V7.2L12 4Z"/></svg><span>Behavior Packs</span><small class="cat-count" data-count-for="Behavior Packs"></small></a></li><li><a class="cat-tile" href="#/search?cat=Maps" data-cat-tile="Maps"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="m9 5-4.5 1.6v12.2L9 17.2l6 1.8 4.5-1.6V5.2L15 6.8 9 5Z"/><path fill="none" stroke="currentColor" stroke-width="1.8" d="M9 5v12.2M15 6.8v12.2"/></svg><span>Maps</span><small class="cat-count" data-count-for="Maps"></small></a></li><li><a class="cat-tile" href="#/search?cat=Skins" data-cat-tile="Skins"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M5.5 19.2c1.2-2.8 3.4-4.2 6.5-4.2s5.3 1.4 6.5 4.2"/></svg><span>Skins</span><small class="cat-count" data-count-for="Skins"></small></a></li></ul>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="latest-heading">
+          <div class="wrap">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Just landed</p>
+                <h2 id="latest-heading">Latest additions</h2>
+              </div>
+            </div>
+            <div id="home-latest" class="latest-list"></div>
+          </div>
+        </section>
+      </div>
+
+      <section id="view-search" class="section" hidden>
+        <div class="wrap">
+          <div class="page-head">
+            <p class="eyebrow">Find something specific</p>
+            <h1>Search</h1>
+          </div>
+          <form class="search-form" data-search-form role="search" autocomplete="off">
+            <label class="search-field search-field-lg">
+              <span class="sr-only">Search the catalog</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.25" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 16.5 20 20.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <input id="search-input" type="search" placeholder="Search mods, creators, versions" autocomplete="off" enterkeyhint="search">
+              <button type="button" class="search-clear" data-clear-search hidden aria-label="Clear search">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              </button>
+            </label>
+            <button type="submit" class="btn">Search</button>
+          </form>
+          <div class="chips" role="toolbar" aria-label="Filter by category">
+            <button type="button" class="chip" data-filter="All" aria-pressed="true">All</button>
+            <button type="button" class="chip" data-filter="Mods" aria-pressed="false">Mods</button>
+            <button type="button" class="chip" data-filter="Add-ons" aria-pressed="false">Add-ons</button>
+            <button type="button" class="chip" data-filter="Horror" aria-pressed="false">Horror</button>
+            <button type="button" class="chip" data-filter="Resource Packs" aria-pressed="false">Resource Packs</button>
+            <button type="button" class="chip" data-filter="Behavior Packs" aria-pressed="false">Behavior Packs</button>
+            <button type="button" class="chip" data-filter="Maps" aria-pressed="false">Maps</button>
+            <button type="button" class="chip" data-filter="Skins" aria-pressed="false">Skins</button>
+          </div>
+          <div class="search-toolbar">
+            <p id="result-count" class="result-count"></p>
+            <label class="sort-field">
+              <span>Sort</span>
+              <select id="sort-select" aria-label="Sort results">
+                <option value="newest">Newest</option>
+                <option value="oldest">Oldest</option>
+                <option value="name">Name A–Z</option>
+              </select>
+            </label>
+            <button type="button" class="btn btn-ghost btn-sm" data-reset hidden id="reset-btn">Clear all</button>
+          </div>
+          <p id="results-live" class="sr-only" aria-live="polite"></p>
+          <div id="search-results" class="mod-grid"></div>
+        </div>
+      </section>
+
+      <section id="view-favorites" class="section" hidden>
+        <div class="wrap">
+          <div class="page-head">
+            <p class="eyebrow">On this device</p>
+            <h1>Favorites</h1>
+            <p class="lede tight">Hearts you save stay in this browser. Clearing site data removes them.</p>
+          </div>
+          <div id="favorites-list"></div>
+        </div>
+      </section>
+
+      <section id="view-detail" class="section" hidden>
+        <div class="wrap" id="detail-root"></div>
+      </section>
+
+      <section id="view-settings" class="section" hidden>
+        <div class="wrap narrow">
+          <div class="page-head">
+            <p class="eyebrow">Preferences</p>
+            <h1>Settings</h1>
+            <p class="lede tight">Theme, policies, and where to follow Vathana. No account, no language menu, nothing fake.</p>
+          </div>
+          <h2 class="block-title">Appearance</h2>
+          <div class="theme-grid" role="group" aria-label="Theme">
+            <button type="button" class="theme-choice" data-theme-set="dark" aria-pressed="true">
+              <span class="swatch swatch-dark" aria-hidden="true"></span>
+              <span><strong>Dark</strong><small>Navy surfaces, azure accents</small></span>
+            </button>
+            <button type="button" class="theme-choice" data-theme-set="light" aria-pressed="false">
+              <span class="swatch swatch-light" aria-hidden="true"></span>
+              <span><strong>Light</strong><small>White surfaces, navy text</small></span>
+            </button>
+          </div>
+          <h2 class="block-title">Information</h2>
+          <ul class="link-list">
+            <li><a href="#/about">About AzuMC <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></a></li>
+            <li><a href="#/help">Help <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></a></li>
+            <li><a href="#/privacy">Privacy Policy <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></a></li>
+            <li><a href="#/terms">Terms of Use <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></a></li>
+          </ul>
+          <h2 class="block-title">Social</h2>
+          <ul class="link-list">
+            <li><a href="https://www.tiktok.com/@vathana1200" target="_blank" rel="noopener noreferrer">TikTok <small>@vathana1200</small></a></li>
+            <li><a href="https://www.youtube.com/@Vathana120" target="_blank" rel="noopener noreferrer">YouTube <small>@Vathana120</small></a></li>
+            <li><a href="https://t.me/Vathana0120" target="_blank" rel="noopener noreferrer">Telegram <small>@Vathana0120</small></a></li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="view-page" class="section" hidden>
+        <div class="wrap narrow">
+          <article data-page="about" hidden>
+            <a class="back" href="#/settings">Settings</a>
+            <h1>About AzuMC</h1>
+            <p>AzuMC is a catalog for Minecraft Bedrock mods and add-ons, made by Vathana. Browse, search, and save your favorite mods, add-ons, resource packs, maps, and skins.</p>
+            
+            <p>AzuMC is not affiliated with Mojang or Microsoft. Minecraft is a trademark of Mojang Synergies AB.</p>
+            <p>Made by VATHANA © 2026</p>
+          </article>
+          <article data-page="help" hidden>
+            <a class="back" href="#/settings">Settings</a>
+            <h1>Help</h1>
+            <p>Open the Search tab to find something specific. It checks the mod name, description, category, creator, and version, and ignores capitalization. Category chips narrow the results and work together with whatever you typed.</p>
+            <p>Use the heart to save a mod. Favorites stay in this browser until you remove them or clear site data. Dark and light themes are saved the same way.</p>
+            <p>Open a mod for the full write-up, preview art, related mods, and and a button to share it. Downloads will appear when a file is ready.</p>
+            <p>Escape closes an open preview, or leaves a mod page. On a phone, the bottom bar hides while you scroll down and returns when you scroll up.</p>
+          </article>
+          <article data-page="privacy" hidden>
+            <a class="back" href="#/settings">Settings</a>
+            <h1>Privacy Policy</h1>
+            <p>AzuMC does not ask you to create an account. There is no profile and no upload form.</p>
+            <p>Your theme and favorite mod IDs are stored in localStorage on this device. They are not sent to a server.</p>
+            <p>Links to TikTok, YouTube, and Telegram leave AzuMC. Those sites have their own policies. AzuMC does not run analytics and does not sell personal information, because it does not collect it.</p>
+            <p>Made by VATHANA © 2026</p>
+          </article>
+          <article data-page="terms" hidden>
+            <a class="back" href="#/settings">Settings</a>
+            <h1>Terms of Use</h1>
+            <p>Mod details such as versions, creators, and file sizes are provided for information and may change. Some downloads are marked coming soon until a file is ready.</p>
+            <p>No payment, subscription check, or “verification” of likes and follows is part of this version. If a download flow is enabled later, a countdown is only a timer, and a file link appears only when a real file is configured.</p>
+            <p>You use the site as it is provided. Minecraft remains the property of its owners. Made by VATHANA © 2026.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="follow" id="follow" aria-labelledby="follow-heading">
+        <div class="wrap">
+          <p class="eyebrow">Social</p>
+          <h2 id="follow-heading">FOLLOW VATHANA</h2>
+          <p class="lede tight">Follow for Minecraft content, new projects, and future AzuMC updates.</p>
+          <div class="social-row">
+            <a class="social-btn" href="https://www.tiktok.com/@vathana1200" target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M14.2 3h2.1a5.2 5.2 0 0 0 3.6 3.4v2.2a7.3 7.3 0 0 1-3.6-1v6.7a5.7 5.7 0 1 1-5.7-5.7c.2 0 .5 0 .7.1v2.4a3.4 3.4 0 1 0 2.3 3.2V3Z"/></svg>
+              <span><strong>TikTok</strong><small>@vathana1200</small></span>
+            </a>
+            <a class="social-btn" href="https://www.youtube.com/@Vathana120" target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21.2 8.2a2.6 2.6 0 0 0-1.8-1.8C17.7 6 12 6 12 6s-5.7 0-7.4.4a2.6 2.6 0 0 0-1.8 1.8A27 27 0 0 0 2.4 12a27 27 0 0 0 .4 3.8 2.6 2.6 0 0 0 1.8 1.8C6.3 18 12 18 12 18s5.7 0 7.4-.4a2.6 2.6 0 0 0 1.8-1.8 27 27 0 0 0 .4-3.8 27 27 0 0 0-.4-3.8ZM10.4 15.1V8.9L15.6 12l-5.2 3.1Z"/></svg>
+              <span><strong>YouTube</strong><small>@Vathana120</small></span>
+            </a>
+            <a class="social-btn" href="https://t.me/Vathana0120" target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.7 4.4 3.6 11c-1.2.5-1.2 1.1-.2 1.4l4.4 1.4 1.7 5.2c.2.6.1.8.7.8.4 0 .6-.2.8-.4l2.5-2.4 4.3 3.2c.8.4 1.3.2 1.5-.7l2.7-12.8c.3-1.1-.4-1.6-1.3-1.3ZM8.7 13.6l8.8-5.5c.4-.3.8-.1.5.2l-7.5 6.8-.3 3.2-1.5-4.7Z"/></svg>
+              <span><strong>Telegram</strong><small>@Vathana0120</small></span>
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-grid">
+        <div>
+          <a class="brand" href="#/">
+            <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16.2 2.2 30.2 29h-5.6l-2.8-5.8H10.2L7.4 29H1.8L15.8 2.2h.4Zm-.2 11.4-3.9 8h7.8l-3.9-8Z"/></svg>
+            <span class="brand-name"><span>A</span>zuMC</span>
+          </a>
+          <p>A premium shelf for Minecraft Bedrock mods and add-ons, by VATHANA.</p>
+        </div>
+        <div>
+          <h2>Explore</h2>
+          <a href="#/">Home</a>
+          <a href="#/search">Search</a>
+          <a href="#/favorites">Favorites</a>
+          <a href="#/about">About</a>
+          <a href="#/help">Help</a>
+        </div>
+        <div>
+          <h2>Policies</h2>
+          <a href="#/privacy">Privacy Policy</a>
+          <a href="#/terms">Terms of Use</a>
+          <a href="#/settings">Settings</a>
+        </div>
+        <div>
+          <h2>Follow</h2>
+          <a href="https://www.tiktok.com/@vathana1200" target="_blank" rel="noopener noreferrer">TikTok</a>
+          <a href="https://www.youtube.com/@Vathana120" target="_blank" rel="noopener noreferrer">YouTube</a>
+          <a href="https://t.me/Vathana0120" target="_blank" rel="noopener noreferrer">Telegram</a>
+        </div>
+      </div>
+      <div class="wrap footer-bar">
+        <p>Made by VATHANA © 2026</p>
+        <p>Not affiliated with Mojang or Microsoft.</p>
+      </div>
+    </footer>
+
+    <nav class="tabbar" aria-label="Main">
+      <a href="#/" data-nav="home">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M4 11.2 12 4l8 7.2V20a1 1 0 0 1-1 1h-5.2v-5.2H10.2V21H5a1 1 0 0 1-1-1v-8.8Z"/></svg>
+        <span>Home</span>
+      </a>
+      <a href="#/search" data-nav="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.25" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 16.5 20 20.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Search</span>
+      </a>
+      <a href="#/favorites" data-nav="favorites">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M12 19.2s-6.4-3.9-6.4-8.2A3.7 3.7 0 0 1 12 8a3.7 3.7 0 0 1 6.4 3c0 4.3-6.4 8.2-6.4 8.2Z"/></svg>
+        <span>Favorites</span>
+        <span class="dot-count js-fav-count" hidden>0</span>
+      </a>
+      <a href="#/settings" data-nav="settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11M19 17h1"/><circle cx="15" cy="7" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="12" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="17" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span>Settings</span>
+      </a>
+    </nav>
+
+    <div id="lightbox" class="lightbox" hidden>
+      <button type="button" class="lightbox-backdrop" data-close-light aria-label="Close preview"></button>
+      <figure role="dialog" aria-modal="true" aria-label="Preview">
+        <img alt="" id="lightbox-img">
+        <figcaption id="lightbox-cap"></figcaption>
+        <button type="button" class="btn btn-ghost" data-close-light>Close</button>
+      </figure>
+    </div>
+    <div id="toast" class="toast" role="status" hidden></div>
+    <noscript>
+      <p class="noscript">AzuMC needs JavaScript for search, favorites, and mod details.</p>
+    </noscript>
+  </div>
+  <script src="data/mods.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
