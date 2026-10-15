@@ -99,7 +99,6 @@
       '<article class="card card-' + variant + '">' +
         '<div class="card-media">' +
           '<img src="' + esc(mod.image) + '" alt="' + esc(mod.alt) + '" loading="' + loading + '" decoding="async" data-fallback="' + esc(mod.name) + '">' +
-                    '<button type="button" class="fav" data-fav="' + esc(mod.id) + '" data-name="' + esc(mod.name) + '" aria-pressed="' + (on ? "true" : "false") + '" aria-label="' + (on ? "Remove from favorites" : "Save to favorites") + ": " + esc(mod.name) + '">' + heart(on) + "</button>" +
         "</div>" +
         '<div class="card-body">' +
           '<p class="kicker">' + esc(mod.category) + "</p>" +
@@ -108,20 +107,34 @@
           (variant !== "compact" ? '<p class="excerpt">' + esc(mod.summary) + "</p>" : "") +
           '<a class="btn btn-ghost" href="#/mod/' + esc(mod.id) + '">Details</a>' +
         "</div>" +
+        '<button type="button" class="fav" data-fav="' + esc(mod.id) + '" data-name="' + esc(mod.name) + '" aria-pressed="' + (on ? "true" : "false") + '" aria-label="' + (on ? "Remove from favorites" : "Save to favorites") + ": " + esc(mod.name) + '">' + heart(on) + "</button>" +
       "</article>"
     );
   }
 
+  /* If a thumbnail 404s, try the same name with other common extensions
+     (so photo.png works even when the list says photo.jpg), then show a letter. */
   function bindImages(scope) {
+    var exts = ["jpg", "jpeg", "png", "webp"];
     scope.querySelectorAll("img[data-fallback]").forEach(function (img) {
-      img.addEventListener("error", function () {
+      var tried = {};
+      img.addEventListener("error", function onErr() {
+        var src = img.getAttribute("src") || "";
+        var m = src.match(/^(.*)\.([a-zA-Z0-9]+)(\?.*)?$/);
+        if (m) {
+          tried[m[2].toLowerCase()] = true;
+          for (var i = 0; i < exts.length; i++) {
+            if (!tried[exts[i]]) { tried[exts[i]] = true; img.setAttribute("src", m[1] + "." + exts[i]); return; }
+          }
+        }
+        img.removeEventListener("error", onErr);
         var fb = document.createElement("div");
         fb.className = "thumb-fallback";
         fb.setAttribute("role", "img");
         fb.setAttribute("aria-label", img.alt || "Preview unavailable");
         fb.textContent = (img.getAttribute("data-fallback") || "?").slice(0, 1);
         img.replaceWith(fb);
-      }, { once: true });
+      });
     });
   }
 
@@ -214,24 +227,169 @@
     );
   }
 
-  function renderHero() {
-    var mod = null;
-    for (var i = 0; i < MODS.length; i++) if (MODS[i].hero) mod = MODS[i];
-    var slot = document.getElementById("hero-feature");
-    if (!slot || !mod) return;
+  /* ---- Home hero slider: swipe by hand, auto-slides to a random mod every 15 s ---- */
+  var HERO_AUTO_MS = 15000;
+  var HERO_SLIDE_MS = 450;
+  var hero = { list: [], index: 0, timer: 0, busy: false, dragging: false, justDragged: false };
+
+  function heroWrap(i) {
+    var n = hero.list.length;
+    return ((i % n) + n) % n;
+  }
+
+  function heroSlideHTML(mod) {
     var on = favs.has(mod.id);
+    return (
+      '<div class="hero-slide">' +
+        '<article class="hero-card">' +
+          '<img src="' + esc(mod.image) + '" alt="' + esc(mod.alt) + '" width="640" height="360" draggable="false" data-fallback="' + esc(mod.name) + '">' +
+          "<div>" +
+            '<p class="kicker">' + esc(mod.category) + " · " + vLabel(mod.version) + "</p>" +
+            '<h3><a href="#/mod/' + esc(mod.id) + '" draggable="false">' + esc(mod.name) + "</a></h3>" +
+            '<p class="meta">' + esc(mod.summary) + "</p>" +
+            '<a class="text-link" href="#/mod/' + esc(mod.id) + '" draggable="false">Details</a>' +
+          "</div>" +
+          '<button type="button" class="fav" data-fav="' + esc(mod.id) + '" data-name="' + esc(mod.name) + '" aria-pressed="' + (on ? "true" : "false") + '" aria-label="' + (on ? "Remove from favorites" : "Save to favorites") + ": " + esc(mod.name) + '">' + heart(on) + "</button>" +
+        "</article>" +
+      "</div>"
+    );
+  }
+
+  function heroTrack() { return document.querySelector("#hero-feature .hero-track"); }
+
+  /* Draw prev / current / next with the current one centred (no animation). */
+  function paintHero() {
+    var track = heroTrack();
+    if (!track) return;
+    var n = hero.list.length;
+    var cur = hero.list[hero.index];
+    if (n === 1) {
+      track.classList.add("is-single");
+      track.innerHTML = heroSlideHTML(cur);
+    } else {
+      track.classList.remove("is-single");
+      track.innerHTML = heroSlideHTML(hero.list[heroWrap(hero.index - 1)]) + heroSlideHTML(cur) + heroSlideHTML(hero.list[heroWrap(hero.index + 1)]);
+    }
+    track.style.transition = "none";
+    track.style.transform = n === 1 ? "none" : "translateX(-100%)";
+    bindImages(track);
+    var dots = document.querySelectorAll("#hero-feature .hero-dots span");
+    for (var i = 0; i < dots.length; i++) dots[i].classList.toggle("is-active", i === hero.index);
+  }
+
+  /* dir = +1 slides to the next card, -1 to the previous. `target` may be any mod index. */
+  function heroGo(target, dir) {
+    var track = heroTrack();
+    if (!track || hero.busy || hero.list.length < 2) return;
+    hero.busy = true;
+    var slides = track.children;
+    var pos = dir > 0 ? 2 : 0;
+    var wanted = hero.list[target];
+    if (slides[pos] && slides[pos].querySelector("[data-fav]").getAttribute("data-fav") !== wanted.id) {
+      var holder = document.createElement("div");
+      holder.innerHTML = heroSlideHTML(wanted);
+      track.replaceChild(holder.firstChild, slides[pos]);
+      bindImages(track);
+    }
+    var ms = motion() === "auto" ? 0 : HERO_SLIDE_MS;
+    track.style.transition = ms ? "transform " + ms + "ms cubic-bezier(0.22, 0.7, 0.2, 1)" : "none";
+    track.style.transform = "translateX(" + (dir > 0 ? "-200%" : "0%") + ")";
+    setTimeout(function () {
+      hero.index = target;
+      hero.busy = false;
+      paintHero();
+    }, ms + 30);
+  }
+
+  function heroSnapBack() {
+    var track = heroTrack();
+    if (!track) return;
+    var ms = motion() === "auto" ? 0 : 250;
+    track.style.transition = ms ? "transform " + ms + "ms ease" : "none";
+    track.style.transform = "translateX(-100%)";
+  }
+
+  function heroAutoTick() {
+    var slot = document.getElementById("hero-feature");
+    if (!slot || slot.offsetParent === null || document.hidden || hero.busy || hero.dragging) return;
+    var n = hero.list.length, target;
+    do { target = Math.floor(Math.random() * n); } while (target === hero.index);
+    heroGo(target, 1);
+  }
+
+  function heroRestartTimer() {
+    clearInterval(hero.timer);
+    if (hero.list.length > 1) hero.timer = setInterval(heroAutoTick, HERO_AUTO_MS);
+  }
+
+  function bindHeroDrag(slot) {
+    var slider = slot.querySelector(".hero-slider");
+    var startX = 0, startY = 0, dx = 0, startT = 0, active = false, pid = null;
+
+    slider.addEventListener("pointerdown", function (e) {
+      if (hero.busy || (e.pointerType === "mouse" && e.button !== 0)) return;
+      active = true; hero.dragging = false; dx = 0;
+      startX = e.clientX; startY = e.clientY; startT = Date.now(); pid = e.pointerId;
+    });
+
+    slider.addEventListener("pointermove", function (e) {
+      if (!active || e.pointerId !== pid) return;
+      dx = e.clientX - startX;
+      var dy = e.clientY - startY;
+      if (!hero.dragging) {
+        if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy)) return;
+        hero.dragging = true;
+        try { slider.setPointerCapture(pid); } catch (err) {}
+        heroTrack().style.transition = "none";
+      }
+      heroTrack().style.transform = "translateX(calc(-100% + " + dx + "px))";
+    });
+
+    function end(e) {
+      if (!active || (e && e.pointerId !== pid)) return;
+      active = false;
+      if (!hero.dragging) return;
+      hero.dragging = false;
+      hero.justDragged = true;
+      setTimeout(function () { hero.justDragged = false; }, 60);
+      var width = slider.getBoundingClientRect().width || 1;
+      var fast = Math.abs(dx) / Math.max(1, Date.now() - startT) > 0.45;
+      if (Math.abs(dx) > width * 0.2 || (fast && Math.abs(dx) > 24)) {
+        var dir = dx < 0 ? 1 : -1;
+        heroGo(heroWrap(hero.index + dir), dir);
+      } else {
+        heroSnapBack();
+      }
+      heroRestartTimer();
+    }
+    slider.addEventListener("pointerup", end);
+    slider.addEventListener("pointercancel", end);
+    slider.addEventListener("dragstart", function (e) { e.preventDefault(); });
+    /* A swipe must not open the mod page it ended on. */
+    slot.addEventListener("click", function (e) {
+      if (hero.justDragged) { e.preventDefault(); e.stopPropagation(); }
+    }, true);
+  }
+
+  function renderHero() {
+    var slot = document.getElementById("hero-feature");
+    if (!slot || !MODS.length) return;
+    hero.list = MODS.slice();
+    hero.index = Math.floor(Math.random() * hero.list.length);
+    var dots = "";
+    if (hero.list.length > 1 && hero.list.length <= 24) {
+      for (var i = 0; i < hero.list.length; i++) dots += "<span></span>";
+    }
     slot.innerHTML =
-      '<article class="hero-card">' +
-        '<img src="' + esc(mod.image) + '" alt="' + esc(mod.alt) + '" width="132" height="132" data-fallback="' + esc(mod.name) + '">' +
-        "<div>" +
-          '<p class="kicker">' + esc(mod.category) + " · " + vLabel(mod.version) + "</p>" +
-          '<h3><a href="#/mod/' + esc(mod.id) + '">' + esc(mod.name) + "</a></h3>" +
-          '<p class="meta">' + esc(mod.summary) + "</p>" +
-          '<a class="text-link" href="#/mod/' + esc(mod.id) + '">Details</a>' +
-        "</div>" +
-        '<button type="button" class="fav" data-fav="' + esc(mod.id) + '" data-name="' + esc(mod.name) + '" aria-pressed="' + (on ? "true" : "false") + '" aria-label="' + (on ? "Remove from favorites" : "Save to favorites") + ": " + esc(mod.name) + '">' + heart(on) + "</button>" +
-      "</article>";
-    bindImages(slot);
+      '<div class="hero-slider" role="group" aria-roledescription="carousel" aria-label="Discover mods. Swipe to see more.">' +
+        '<div class="hero-track"></div>' +
+      "</div>" +
+      (dots ? '<div class="hero-dots" aria-hidden="true">' + dots + "</div>" : "");
+    paintHero();
+    if (hero.list.length > 1) {
+      bindHeroDrag(slot);
+      heroRestartTimer();
+    }
   }
 
   function latestRowHTML(mod) {
