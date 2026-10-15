@@ -7,7 +7,6 @@
 
   var DOWNLOAD_SYSTEM = {
     enabled: true,
-    prepareSeconds: 3,
     extensions: [".mcaddon", ".mcpack", ".mcworld", ".mctemplate", ".zip"]
   };
 
@@ -87,7 +86,6 @@
     }
     return {
       ok: true,
-      prepareSeconds: DOWNLOAD_SYSTEM.prepareSeconds,
       file: mod.file
     };
   }
@@ -227,171 +225,6 @@
     );
   }
 
-  /* ---- Home hero slider: swipe by hand, auto-slides to a random mod every 15 s ---- */
-  var HERO_AUTO_MS = 15000;
-  var HERO_SLIDE_MS = 450;
-  var hero = { list: [], index: 0, timer: 0, busy: false, dragging: false, justDragged: false };
-
-  function heroWrap(i) {
-    var n = hero.list.length;
-    return ((i % n) + n) % n;
-  }
-
-  function heroSlideHTML(mod) {
-    var on = favs.has(mod.id);
-    return (
-      '<div class="hero-slide">' +
-        '<article class="hero-card">' +
-          '<img src="' + esc(mod.image) + '" alt="' + esc(mod.alt) + '" width="640" height="360" draggable="false" data-fallback="' + esc(mod.name) + '">' +
-          "<div>" +
-            '<p class="kicker">' + esc(mod.category) + " · " + vLabel(mod.version) + "</p>" +
-            '<h3><a href="#/mod/' + esc(mod.id) + '" draggable="false">' + esc(mod.name) + "</a></h3>" +
-            '<p class="meta">' + esc(mod.summary) + "</p>" +
-            '<a class="text-link" href="#/mod/' + esc(mod.id) + '" draggable="false">Details</a>' +
-          "</div>" +
-          '<button type="button" class="fav" data-fav="' + esc(mod.id) + '" data-name="' + esc(mod.name) + '" aria-pressed="' + (on ? "true" : "false") + '" aria-label="' + (on ? "Remove from favorites" : "Save to favorites") + ": " + esc(mod.name) + '">' + heart(on) + "</button>" +
-        "</article>" +
-      "</div>"
-    );
-  }
-
-  function heroTrack() { return document.querySelector("#hero-feature .hero-track"); }
-
-  /* Draw prev / current / next with the current one centred (no animation). */
-  function paintHero() {
-    var track = heroTrack();
-    if (!track) return;
-    var n = hero.list.length;
-    var cur = hero.list[hero.index];
-    if (n === 1) {
-      track.classList.add("is-single");
-      track.innerHTML = heroSlideHTML(cur);
-    } else {
-      track.classList.remove("is-single");
-      track.innerHTML = heroSlideHTML(hero.list[heroWrap(hero.index - 1)]) + heroSlideHTML(cur) + heroSlideHTML(hero.list[heroWrap(hero.index + 1)]);
-    }
-    track.style.transition = "none";
-    track.style.transform = n === 1 ? "none" : "translateX(-100%)";
-    bindImages(track);
-    var dots = document.querySelectorAll("#hero-feature .hero-dots span");
-    for (var i = 0; i < dots.length; i++) dots[i].classList.toggle("is-active", i === hero.index);
-  }
-
-  /* dir = +1 slides to the next card, -1 to the previous. `target` may be any mod index. */
-  function heroGo(target, dir) {
-    var track = heroTrack();
-    if (!track || hero.busy || hero.list.length < 2) return;
-    hero.busy = true;
-    var slides = track.children;
-    var pos = dir > 0 ? 2 : 0;
-    var wanted = hero.list[target];
-    if (slides[pos] && slides[pos].querySelector("[data-fav]").getAttribute("data-fav") !== wanted.id) {
-      var holder = document.createElement("div");
-      holder.innerHTML = heroSlideHTML(wanted);
-      track.replaceChild(holder.firstChild, slides[pos]);
-      bindImages(track);
-    }
-    var ms = motion() === "auto" ? 0 : HERO_SLIDE_MS;
-    track.style.transition = ms ? "transform " + ms + "ms cubic-bezier(0.22, 0.7, 0.2, 1)" : "none";
-    track.style.transform = "translateX(" + (dir > 0 ? "-200%" : "0%") + ")";
-    setTimeout(function () {
-      hero.index = target;
-      hero.busy = false;
-      paintHero();
-    }, ms + 30);
-  }
-
-  function heroSnapBack() {
-    var track = heroTrack();
-    if (!track) return;
-    var ms = motion() === "auto" ? 0 : 250;
-    track.style.transition = ms ? "transform " + ms + "ms ease" : "none";
-    track.style.transform = "translateX(-100%)";
-  }
-
-  function heroAutoTick() {
-    var slot = document.getElementById("hero-feature");
-    if (!slot || slot.offsetParent === null || document.hidden || hero.busy || hero.dragging) return;
-    var n = hero.list.length, target;
-    do { target = Math.floor(Math.random() * n); } while (target === hero.index);
-    heroGo(target, 1);
-  }
-
-  function heroRestartTimer() {
-    clearInterval(hero.timer);
-    if (hero.list.length > 1) hero.timer = setInterval(heroAutoTick, HERO_AUTO_MS);
-  }
-
-  function bindHeroDrag(slot) {
-    var slider = slot.querySelector(".hero-slider");
-    var startX = 0, startY = 0, dx = 0, startT = 0, active = false, pid = null;
-
-    slider.addEventListener("pointerdown", function (e) {
-      if (hero.busy || (e.pointerType === "mouse" && e.button !== 0)) return;
-      active = true; hero.dragging = false; dx = 0;
-      startX = e.clientX; startY = e.clientY; startT = Date.now(); pid = e.pointerId;
-    });
-
-    slider.addEventListener("pointermove", function (e) {
-      if (!active || e.pointerId !== pid) return;
-      dx = e.clientX - startX;
-      var dy = e.clientY - startY;
-      if (!hero.dragging) {
-        if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy)) return;
-        hero.dragging = true;
-        try { slider.setPointerCapture(pid); } catch (err) {}
-        heroTrack().style.transition = "none";
-      }
-      heroTrack().style.transform = "translateX(calc(-100% + " + dx + "px))";
-    });
-
-    function end(e) {
-      if (!active || (e && e.pointerId !== pid)) return;
-      active = false;
-      if (!hero.dragging) return;
-      hero.dragging = false;
-      hero.justDragged = true;
-      setTimeout(function () { hero.justDragged = false; }, 60);
-      var width = slider.getBoundingClientRect().width || 1;
-      var fast = Math.abs(dx) / Math.max(1, Date.now() - startT) > 0.45;
-      if (Math.abs(dx) > width * 0.2 || (fast && Math.abs(dx) > 24)) {
-        var dir = dx < 0 ? 1 : -1;
-        heroGo(heroWrap(hero.index + dir), dir);
-      } else {
-        heroSnapBack();
-      }
-      heroRestartTimer();
-    }
-    slider.addEventListener("pointerup", end);
-    slider.addEventListener("pointercancel", end);
-    slider.addEventListener("dragstart", function (e) { e.preventDefault(); });
-    /* A swipe must not open the mod page it ended on. */
-    slot.addEventListener("click", function (e) {
-      if (hero.justDragged) { e.preventDefault(); e.stopPropagation(); }
-    }, true);
-  }
-
-  function renderHero() {
-    var slot = document.getElementById("hero-feature");
-    if (!slot || !MODS.length) return;
-    hero.list = MODS.slice();
-    hero.index = Math.floor(Math.random() * hero.list.length);
-    var dots = "";
-    if (hero.list.length > 1 && hero.list.length <= 24) {
-      for (var i = 0; i < hero.list.length; i++) dots += "<span></span>";
-    }
-    slot.innerHTML =
-      '<div class="hero-slider" role="group" aria-roledescription="carousel" aria-label="Discover mods. Swipe to see more.">' +
-        '<div class="hero-track"></div>' +
-      "</div>" +
-      (dots ? '<div class="hero-dots" aria-hidden="true">' + dots + "</div>" : "");
-    paintHero();
-    if (hero.list.length > 1) {
-      bindHeroDrag(slot);
-      heroRestartTimer();
-    }
-  }
-
   function latestRowHTML(mod) {
     var on = favs.has(mod.id);
     return (
@@ -421,14 +254,16 @@
 
   function renderHome() {
     var byCat = function (cat) { return MODS.filter(function (m) { return m.category === cat; }).sort(byDate); };
-    var featured = MODS.filter(function (mod) { return mod.featured; }).sort(byDate);
+    var featured = shuffle(MODS.slice()).slice(0, 8);
+    var featuredIds = {};
+    featured.forEach(function (m) { featuredIds[m.id] = true; });
     var horror = byCat("Horror");
     var packs = byCat("Resource Packs");
-    var recommended = MODS.filter(function (m) { return !m.featured; }).sort(byDate).slice(0, 4);
+    var recommended = MODS.filter(function (m) { return !featuredIds[m.id]; }).sort(byDate).slice(0, 4);
+    if (!recommended.length) recommended = MODS.slice().sort(byDate).slice(0, 4);
     var latest = MODS.slice().sort(byDate).slice(0, 5);
 
-    fillShelf("featured-track", featured, "feature");
-    updateCarousel();
+    renderFeaturedLoop(featured);
     fillShelf("home-recommended", recommended, "catalog");
     fillShelf("home-horror", horror, horror.length === 1 ? "wide" : "catalog");
     fillShelf("home-packs", packs.slice(0, 4), "catalog");
@@ -528,17 +363,15 @@
     el.innerHTML =
       '<section class="task-panel download-panel">' +
         "<h3>Download</h3>" +
-        "<p>" + esc(mod.name) + " · " + esc(mod.fileSize) + " · " + esc(plan.file.ext) + "</p>" +
+        '<p class="file-name">' + esc(fileName) + "</p>" +
         '<a class="btn" data-download href="' + esc(plan.file.url) + '" download="' + esc(fileName) + '">Download</a>' +
         '<p class="timer-status" role="status"></p>' +
       "</section>";
     var btn = el.querySelector("[data-download]");
     var status = el.querySelector(".timer-status");
-    /* The link downloads straight away on tap (no delay). We only check afterwards
-       that the file really exists on the site, so a wrong file name is easy to spot. */
+    /* Tapping the button downloads the file immediately: no loading, no waiting.
+       We only check afterwards that the file exists, and show a message if it does not. */
     btn.addEventListener("click", function () {
-      status.textContent = "Download started. Check your downloads.";
-      btn.textContent = "Download again";
       if (location.protocol.indexOf("http") !== 0 || !window.fetch) return;
       fetch(plan.file.url, { method: "HEAD", cache: "no-store" }).then(function (res) {
         if (!res.ok) status.textContent = "File not found: " + plan.file.url + ". Check the file name in the downloads folder.";
@@ -718,6 +551,7 @@
     if (tabbar) tabbar.classList.remove("is-hidden");
     showViews(route);
     updateNav(route);
+    if (route.name === "home") featuredFix();
     if (route.name === "favorites") renderFavorites();
     if (route.name === "detail") renderDetail(route.id);
     else document.title = titles(route);
@@ -840,14 +674,78 @@
     lightTrigger = null;
   }
 
-  function updateCarousel() {
+  function shuffle(list) {
+    for (var i = list.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = list[i]; list[i] = list[j]; list[j] = t;
+    }
+    return list;
+  }
+
+  /* ---- Featured: endless loop carousel, random order on every visit ---- */
+  var FEATURED_AUTO_MS = 15000;
+  var floop = { n: 0, k: 0, positioned: false, touching: false, idle: 0, last: 0 };
+
+  function renderFeaturedLoop(list) {
     var track = document.getElementById("featured-track");
     if (!track) return;
-    var max = track.scrollWidth - track.clientWidth;
+    var section = track.closest("section");
+    if (!list.length) { if (section) section.hidden = true; return; }
+    if (section) section.hidden = false;
+    var n = list.length;
+    var k = n > 1 ? Math.min(n, 5) : 0;
+    var clone = function (mod) {
+      return cardHTML(mod, "feature")
+        .replace("<article", '<article aria-hidden="true"')
+        .replace(/<a /g, '<a tabindex="-1" ')
+        .replace(/<button /g, '<button tabindex="-1" ');
+    };
+    var html = "", i;
+    for (i = n - k; i < n; i++) html += clone(list[i]);
+    list.forEach(function (mod) { html += cardHTML(mod, "feature"); });
+    for (i = 0; i < k; i++) html += clone(list[i]);
+    track.innerHTML = html;
+    floop.n = n; floop.k = k; floop.positioned = false;
+    bindImages(track);
+    featuredFix();
+  }
+
+  function featuredMetrics() {
+    var track = document.getElementById("featured-track");
+    if (!track || track.offsetParent === null || !floop.k) return null;
+    var items = track.children;
+    var first = items[floop.k];
+    var after = items[floop.k + floop.n];
+    if (!first || !after) return null;
+    return {
+      track: track,
+      base: first.offsetLeft - items[0].offsetLeft,
+      loop: after.offsetLeft - first.offsetLeft
+    };
+  }
+
+  function featuredJump(track, left) {
+    track.style.scrollSnapType = "none";
+    track.scrollLeft = left;
+    void track.offsetWidth;
+    requestAnimationFrame(function () { track.style.scrollSnapType = ""; });
+  }
+
+  /* Keep the scroll position inside the real cards; clones on either side are only for looking endless. */
+  function featuredFix() {
+    var m = featuredMetrics();
+    if (!m || m.loop <= 0) return;
+    if (!floop.positioned) { floop.positioned = true; featuredJump(m.track, m.base); return; }
+    var sl = m.track.scrollLeft;
+    if (sl < m.base - 2) featuredJump(m.track, sl + m.loop);
+    else if (sl >= m.base + m.loop - 2) featuredJump(m.track, sl - m.loop);
+  }
+
+  function updateCarousel() {
     var prev = document.querySelector("[data-carousel='-1']");
     var next = document.querySelector("[data-carousel='1']");
-    if (prev) prev.disabled = track.scrollLeft <= 4;
-    if (next) next.disabled = track.scrollLeft >= max - 4;
+    if (prev) prev.disabled = false;
+    if (next) next.disabled = false;
   }
 
   function scrollCarousel(dir) {
@@ -855,6 +753,7 @@
     if (!track) return;
     var card = track.querySelector(".card");
     var delta = (card ? card.getBoundingClientRect().width + 14 : 280) * dir;
+    floop.last = Date.now();
     track.scrollBy({ left: delta, behavior: motion() });
   }
 
@@ -1003,13 +902,32 @@
 
   var track = document.getElementById("featured-track");
   if (track) {
-    track.addEventListener("scroll", updateCarousel, { passive: true });
+    track.addEventListener("scroll", function () {
+      clearTimeout(floop.idle);
+      floop.idle = setTimeout(function () { if (!floop.touching) featuredFix(); }, 140);
+    }, { passive: true });
+    track.addEventListener("touchstart", function () { floop.touching = true; floop.last = Date.now(); }, { passive: true });
+    track.addEventListener("touchend", function () {
+      floop.touching = false;
+      clearTimeout(floop.idle);
+      floop.idle = setTimeout(featuredFix, 200);
+    }, { passive: true });
+    track.addEventListener("pointerdown", function () { floop.last = Date.now(); });
+    track.addEventListener("wheel", function () { floop.last = Date.now(); }, { passive: true });
     track.addEventListener("keydown", function (event) {
       if (event.key === "ArrowRight") { event.preventDefault(); scrollCarousel(1); }
       if (event.key === "ArrowLeft") { event.preventDefault(); scrollCarousel(-1); }
     });
+    setInterval(function () {
+      if (document.hidden || floop.touching || Date.now() - floop.last < 8000) return;
+      if (track.offsetParent === null) return;
+      var r = track.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > window.innerHeight) return;
+      var card = track.querySelector(".card");
+      track.scrollBy({ left: (card ? card.getBoundingClientRect().width + 14 : 280), behavior: motion() });
+    }, FEATURED_AUTO_MS);
   }
-  window.addEventListener("resize", updateCarousel);
+  window.addEventListener("resize", featuredFix);
 
   var tabbar = document.querySelector(".tabbar");
   var lastY = window.scrollY;
@@ -1040,7 +958,16 @@
     applyRoute(parseRoute());
   });
 
-  renderHero();
+  /* Block pinch-zoom and double-tap zoom (Safari ignores user-scalable=no). */
+  ["gesturestart", "gesturechange", "gestureend"].forEach(function (name) {
+    document.addEventListener(name, function (e) { e.preventDefault(); });
+  });
+  var lastTouchEnd = 0;
+  document.addEventListener("touchend", function (e) {
+    var now = Date.now();
+    if (now - lastTouchEnd <= 300) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive: false });
   var verEl = document.getElementById("app-version");
   if (verEl) verEl.textContent = window.AZUMC_VERSION ? String(window.AZUMC_VERSION) : "1.0.0";
   var countEl = document.getElementById("app-mod-count");
