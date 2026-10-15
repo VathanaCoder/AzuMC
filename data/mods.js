@@ -7,7 +7,7 @@
    then check Settings on your site to confirm the new version is live.
    Also change ?v=... in the 3 tags at the bottom/top of index.html to the same number,
    so phones load the new files instead of old saved ones. */
-window.AZUMC_VERSION = "1.0.1";
+window.AZUMC_VERSION = "1.1.0";
 
 window.AZUMC_MODS = [
     {
@@ -16,7 +16,7 @@ window.AZUMC_MODS = [
       category: "Resource Packs",
       version: "1.1.12",
       minecraft: "1.26+",
-      author: "Unknown",
+      author: "Oreville Studios",
       summary: "Actions&Stuff 1.12",
       description: "Actions Stuff 1.12 resource pack for Minecraft Bedrock.",
       image: "assets/mods/actions-stuff.jpg",
