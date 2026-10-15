@@ -683,7 +683,7 @@
 
   /* ---- Featured: loops forever, moves exactly ONE card at a time, slowly ---- */
   var FEATURED_AUTO_MS = 15000;
-  var FEATURED_SLIDE_MS = 900;
+  var FEATURED_SLIDE_MS = 200;
   var fc = { busy: false, dragging: false, justDragged: false, last: 0 };
 
   function featuredTrack() { return document.getElementById("featured-track"); }
