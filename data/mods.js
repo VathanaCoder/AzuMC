@@ -7,7 +7,7 @@
    then check Settings on your site to confirm the new version is live.
    Also change ?v=... in the 3 tags at the bottom/top of index.html to the same number,
    so phones load the new files instead of old saved ones. */
-window.AZUMC_VERSION = "1.1.1";
+window.AZUMC_VERSION = "1.0.4";
 
 window.AZUMC_MODS = [
     {
