@@ -54,7 +54,9 @@ html[data-theme="light"] {
 *::before,
 *::after { box-sizing: border-box; }
 
-html { background: var(--bg); }
+html { background: var(--bg); touch-action: pan-x pan-y; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { touch-action: manipulation; }
+input, select, textarea { font-size: max(16px, 1em); }
 
 html, body {
   margin: 0;
@@ -319,12 +321,11 @@ html[data-theme="light"] .icon-moon { display: block; }
   background: radial-gradient(closest-side, var(--glow), transparent 72%);
   pointer-events: none;
 }
-.hero-grid { position: relative; display: grid; gap: 22px; }
+.hero-grid { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
 .hero-copy { display: grid; gap: 14px; align-content: start; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .hero-note { color: var(--muted); font-size: 0.88rem; }
 
-.hero-aside { display: grid; gap: 12px; }
 .brand-plate {
   margin: 0;
   height: 96px;
@@ -342,7 +343,7 @@ html[data-theme="light"] .icon-moon { display: block; }
 
 .hero-card {
   display: grid;
-  grid-template-columns: 108px 1fr;
+  grid-template-columns: 1fr;
   gap: 12px;
   padding: 10px;
   background: var(--surface);
@@ -351,11 +352,13 @@ html[data-theme="light"] .icon-moon { display: block; }
   position: relative;
 }
 .hero-card img {
-  width: 108px;
-  height: 108px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
   border-radius: 10px;
 }
+.hero-card > div { padding: 0 6px 6px; }
 .hero-card h3 { margin: 4px 0; }
 .hero-card h3 a::after {
   content: "";
@@ -450,17 +453,27 @@ html[data-theme="light"] .icon-moon { display: block; }
 }
 
 .carousel-nav { display: flex; gap: 8px; }
+/* Featured carousel: moves exactly one card at a time, slowly, and loops forever */
+.carousel-viewport {
+  --gap: 14px;
+  --cw: min(290px, 80vw);
+  overflow: hidden;
+  margin-inline: -12px;
+  padding: 10px 12px 20px;
+  outline: none;
+  touch-action: pan-y;
+}
 .carousel-track {
   display: flex;
-  gap: 14px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scroll-padding-left: 2px;
-  padding: 4px 2px 10px;
-  scrollbar-width: none;
-  overscroll-behavior-x: contain;
+  gap: var(--gap);
+  will-change: transform;
+  user-select: none;
+  -webkit-user-select: none;
 }
-.carousel-track::-webkit-scrollbar { display: none; }
+.carousel-track .card-feature { flex: 0 0 var(--cw); min-width: 0; }
+.carousel-track img { -webkit-user-drag: none; }
+@media (min-width: 620px) { .carousel-viewport { --cw: calc((100% - var(--gap)) / 2); } }
+@media (min-width: 900px) { .carousel-viewport { --cw: calc((100% - var(--gap) * 2) / 3); } }
 
 .card {
   position: relative;
@@ -552,7 +565,7 @@ html[data-theme="light"] .fav {
 }
 .fav[aria-pressed="true"] { color: #ff6b81; }
 .fav svg { width: 18px; height: 18px; }
-.hero-card .fav { top: 8px; right: 8px; }
+.hero-card .fav { top: auto; bottom: 14px; right: 14px; }
 
 .thumb-fallback {
   display: grid;
@@ -733,7 +746,8 @@ html[data-theme="light"] .fav {
 }
 .progress:not([hidden]) { animation: rise 0.25s ease both; }
 .download-panel .btn[disabled] { opacity: 0.75; cursor: progress; }
-.download-panel .timer-status { min-height: 1.4em; font-variant-numeric: tabular-nums; }
+.download-panel .timer-status:empty { display: none; }
+.download-panel .file-name { overflow-wrap: anywhere; font-weight: 650; }
 
 /* Settings + pages */
 .block-title { margin: 22px 0 10px; font-size: 1rem; }
@@ -950,8 +964,6 @@ body.no-scroll { overflow: hidden; }
   .mod-grid { grid-template-columns: 1fr 1fr; }
   .theme-grid { grid-template-columns: 1fr 1fr; }
   .social-row { grid-template-columns: repeat(3, 1fr); }
-  .hero-card { grid-template-columns: 132px 1fr; }
-  .hero-card img { width: 132px; height: 132px; }
   .brand-plate { height: 140px; }
   .footer-grid { grid-template-columns: 1.4fr 1fr 1fr 1fr; }
   .meta-grid { grid-template-columns: repeat(3, 1fr); }
@@ -959,7 +971,6 @@ body.no-scroll { overflow: hidden; }
 
 @media (min-width: 900px) {
   .hero { padding: 42px 0 10px; }
-  .hero-grid { grid-template-columns: 1.15fr 0.85fr; gap: 36px; align-items: center; }
   .section { padding: 40px 0; }
   .mod-grid { grid-template-columns: repeat(3, 1fr); }
   .detail-hero { grid-template-columns: 1.15fr 0.85fr; align-items: start; }
@@ -1051,7 +1062,6 @@ html[data-theme="light"] .fav, .fav { color: var(--text); }
 .cat-row { padding: 8px 12px 16px; margin-inline: -12px; scroll-padding-left: 12px; }
 .hero-card > div { padding-right: 44px; }
 .chips { padding: 8px 12px 16px; margin-inline: -12px; }
-.carousel-track { padding: 10px 12px 20px; margin-inline: -12px; scroll-padding-left: 12px; }
 .gallery-track { padding: 6px 12px 16px; margin-inline: -12px; scroll-padding-left: 12px; }
 
 /* ---- Home / Search split ---- */
@@ -1064,7 +1074,7 @@ html[data-theme="light"] .fav, .fav { color: var(--text); }
 .section-head .text-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 /* Home: featured cards carry a short summary, shelves breathe */
-.card-feature { flex-basis: min(290px, 80vw); }
+
 .card-feature .excerpt, .card-wide .excerpt { min-height: 0; }
 .section-tint { background: var(--surface-2); }
 html[data-theme="light"] .section-tint { background: color-mix(in srgb, var(--surface-2) 70%, var(--bg)); }
@@ -1165,3 +1175,25 @@ html[data-theme="light"] .section-tint { background: color-mix(in srgb, var(--su
   font-weight: 650;
 }
 .info-row small { color: var(--muted); font-weight: 550; font-variant-numeric: tabular-nums; }
+
+/* Home hero: logo on top, text and buttons below */
+.brand-top { height: auto; aspect-ratio: 16 / 6; max-height: 150px; max-width: 560px; }
+.hero-copy { max-width: 760px; }
+
+/* Heart sits at the bottom corner of cards so it never covers the artwork */
+.card .fav { top: auto; bottom: 14px; right: 14px; }
+
+/* Medium desktop windows: 3 columns, so show 3 cards instead of 3 + 1 left over */
+@media (min-width: 900px) and (max-width: 1179px) {
+  #home-recommended > :nth-child(4),
+  #home-packs > :nth-child(4) { display: none; }
+}
+
+/* Window / desktop: centre the hero so it doesn't hug the left edge */
+@media (min-width: 900px) {
+  .hero { padding: 48px 0 16px; }
+  .hero-copy { margin-inline: auto; text-align: center; justify-items: center; max-width: 820px; }
+  .hero-copy .lede { max-width: 640px; }
+  .hero-actions { justify-content: center; }
+  .brand-top { width: min(560px, 100%); }
+}

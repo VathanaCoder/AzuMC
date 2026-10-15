@@ -551,7 +551,6 @@
     if (tabbar) tabbar.classList.remove("is-hidden");
     showViews(route);
     updateNav(route);
-    if (route.name === "home") featuredFix();
     if (route.name === "favorites") renderFavorites();
     if (route.name === "detail") renderDetail(route.id);
     else document.title = titles(route);
@@ -682,63 +681,58 @@
     return list;
   }
 
-  /* ---- Featured: endless loop carousel, random order on every visit ---- */
+  /* ---- Featured: loops forever, moves exactly ONE card at a time, slowly ---- */
   var FEATURED_AUTO_MS = 15000;
-  var floop = { n: 0, k: 0, positioned: false, touching: false, idle: 0, last: 0 };
+  var FEATURED_SLIDE_MS = 900;
+  var fc = { busy: false, dragging: false, justDragged: false, last: 0 };
+
+  function featuredTrack() { return document.getElementById("featured-track"); }
 
   function renderFeaturedLoop(list) {
-    var track = document.getElementById("featured-track");
+    var track = featuredTrack();
     if (!track) return;
     var section = track.closest("section");
     if (!list.length) { if (section) section.hidden = true; return; }
     if (section) section.hidden = false;
-    var n = list.length;
-    var k = n > 1 ? Math.min(n, 5) : 0;
-    var clone = function (mod) {
-      return cardHTML(mod, "feature")
-        .replace("<article", '<article aria-hidden="true"')
-        .replace(/<a /g, '<a tabindex="-1" ')
-        .replace(/<button /g, '<button tabindex="-1" ');
-    };
-    var html = "", i;
-    for (i = n - k; i < n; i++) html += clone(list[i]);
-    list.forEach(function (mod) { html += cardHTML(mod, "feature"); });
-    for (i = 0; i < k; i++) html += clone(list[i]);
-    track.innerHTML = html;
-    floop.n = n; floop.k = k; floop.positioned = false;
+    track.style.transition = "none";
+    track.style.transform = "translateX(0)";
+    track.innerHTML = list.map(function (mod) { return cardHTML(mod, "feature"); }).join("");
     bindImages(track);
-    featuredFix();
   }
 
-  function featuredMetrics() {
-    var track = document.getElementById("featured-track");
-    if (!track || track.offsetParent === null || !floop.k) return null;
-    var items = track.children;
-    var first = items[floop.k];
-    var after = items[floop.k + floop.n];
-    if (!first || !after) return null;
-    return {
-      track: track,
-      base: first.offsetLeft - items[0].offsetLeft,
-      loop: after.offsetLeft - first.offsetLeft
-    };
+  function featuredStep(track) {
+    if (track.offsetParent === null || track.children.length < 2) return 0;
+    return track.children[1].offsetLeft - track.children[0].offsetLeft;
   }
 
-  function featuredJump(track, left) {
-    track.style.scrollSnapType = "none";
-    track.scrollLeft = left;
-    void track.offsetWidth;
-    requestAnimationFrame(function () { track.style.scrollSnapType = ""; });
-  }
+  function featuredMs() { return motion() === "auto" ? 0 : FEATURED_SLIDE_MS; }
+  var FEATURED_EASE = "cubic-bezier(0.45, 0, 0.2, 1)";
 
-  /* Keep the scroll position inside the real cards; clones on either side are only for looking endless. */
-  function featuredFix() {
-    var m = featuredMetrics();
-    if (!m || m.loop <= 0) return;
-    if (!floop.positioned) { floop.positioned = true; featuredJump(m.track, m.base); return; }
-    var sl = m.track.scrollLeft;
-    if (sl < m.base - 2) featuredJump(m.track, sl + m.loop);
-    else if (sl >= m.base + m.loop - 2) featuredJump(m.track, sl - m.loop);
+  /* dir +1 = next card (slides left), -1 = previous card (slides right). */
+  function featuredSlide(dir) {
+    var track = featuredTrack();
+    if (!track || fc.busy || fc.dragging) return;
+    var step = featuredStep(track);
+    if (!step) return;
+    fc.busy = true;
+    fc.last = Date.now();
+    var ms = featuredMs();
+    if (dir < 0) {
+      track.style.transition = "none";
+      track.insertBefore(track.lastElementChild, track.firstElementChild);
+      track.style.transform = "translateX(" + (-step) + "px)";
+      void track.offsetWidth;
+    }
+    track.style.transition = ms ? "transform " + ms + "ms " + FEATURED_EASE : "none";
+    track.style.transform = dir > 0 ? "translateX(" + (-step) + "px)" : "translateX(0)";
+    setTimeout(function () {
+      if (dir > 0) {
+        track.style.transition = "none";
+        track.appendChild(track.firstElementChild);
+        track.style.transform = "translateX(0)";
+      }
+      fc.busy = false;
+    }, ms + 40);
   }
 
   function updateCarousel() {
@@ -748,13 +742,90 @@
     if (next) next.disabled = false;
   }
 
-  function scrollCarousel(dir) {
-    var track = document.getElementById("featured-track");
-    if (!track) return;
-    var card = track.querySelector(".card");
-    var delta = (card ? card.getBoundingClientRect().width + 14 : 280) * dir;
-    floop.last = Date.now();
-    track.scrollBy({ left: delta, behavior: motion() });
+  function scrollCarousel(dir) { featuredSlide(dir); }
+
+  function bindFeaturedDrag() {
+    var view = document.querySelector(".carousel-viewport");
+    var track = featuredTrack();
+    if (!view || !track) return;
+    var startX = 0, startY = 0, dx = 0, startT = 0, active = false, pid = null, base = 0, step = 0;
+
+    view.addEventListener("pointerdown", function (e) {
+      if (fc.busy || (e.pointerType === "mouse" && e.button !== 0)) return;
+      active = true; fc.dragging = false; dx = 0; base = 0;
+      startX = e.clientX; startY = e.clientY; startT = Date.now(); pid = e.pointerId;
+      fc.last = Date.now();
+    });
+
+    view.addEventListener("pointermove", function (e) {
+      if (!active || e.pointerId !== pid) return;
+      dx = e.clientX - startX;
+      var dy = e.clientY - startY;
+      if (!fc.dragging) {
+        if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy)) return;
+        fc.dragging = true;
+        step = featuredStep(track);
+        try { view.setPointerCapture(pid); } catch (err) {}
+        track.style.transition = "none";
+      }
+      if (!step) return;
+      var limited = Math.max(-step, Math.min(step, dx));
+      if (limited > 0 && base === 0) {
+        track.insertBefore(track.lastElementChild, track.firstElementChild);
+        base = -step;
+      } else if (limited <= 0 && base !== 0) {
+        track.appendChild(track.firstElementChild);
+        base = 0;
+      }
+      track.style.transform = "translateX(" + (base + limited) + "px)";
+    });
+
+    function end(e) {
+      if (!active || (e && e.pointerId !== pid)) return;
+      active = false;
+      if (!fc.dragging) return;
+      fc.dragging = false;
+      fc.justDragged = true;
+      setTimeout(function () { fc.justDragged = false; }, 80);
+      fc.last = Date.now();
+      var moved = Math.abs(Math.max(-step, Math.min(step, dx)));
+      var fast = Math.abs(dx) / Math.max(1, Date.now() - startT) > 0.45 && Math.abs(dx) > 24;
+      var commit = moved > step * 0.25 || fast;
+      var ms = featuredMs();
+      fc.busy = true;
+      track.style.transition = ms ? "transform " + Math.round(ms * 0.7) + "ms " + FEATURED_EASE : "none";
+      if (base === 0) {
+        track.style.transform = commit ? "translateX(" + (-step) + "px)" : "translateX(0)";
+      } else {
+        track.style.transform = commit ? "translateX(0)" : "translateX(" + (-step) + "px)";
+      }
+      setTimeout(function () {
+        track.style.transition = "none";
+        if (base === 0 && commit) track.appendChild(track.firstElementChild);
+        if (base !== 0 && !commit) track.appendChild(track.firstElementChild);
+        track.style.transform = "translateX(0)";
+        fc.busy = false;
+      }, Math.round(ms * 0.7) + 40);
+    }
+    view.addEventListener("pointerup", end);
+    view.addEventListener("pointercancel", end);
+    view.addEventListener("dragstart", function (e) { e.preventDefault(); });
+    view.addEventListener("click", function (e) {
+      if (fc.justDragged) { e.preventDefault(); e.stopPropagation(); }
+    }, true);
+    view.addEventListener("keydown", function (event) {
+      if (event.key === "ArrowRight") { event.preventDefault(); featuredSlide(1); }
+      if (event.key === "ArrowLeft") { event.preventDefault(); featuredSlide(-1); }
+    });
+    view.addEventListener("wheel", function () { fc.last = Date.now(); }, { passive: true });
+
+    setInterval(function () {
+      if (document.hidden || fc.dragging || fc.busy || Date.now() - fc.last < 8000) return;
+      if (track.offsetParent === null) return;
+      var r = view.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > window.innerHeight) return;
+      featuredSlide(1);
+    }, FEATURED_AUTO_MS);
   }
 
   function toggleFav(id) {
@@ -900,34 +971,7 @@
     }
   });
 
-  var track = document.getElementById("featured-track");
-  if (track) {
-    track.addEventListener("scroll", function () {
-      clearTimeout(floop.idle);
-      floop.idle = setTimeout(function () { if (!floop.touching) featuredFix(); }, 140);
-    }, { passive: true });
-    track.addEventListener("touchstart", function () { floop.touching = true; floop.last = Date.now(); }, { passive: true });
-    track.addEventListener("touchend", function () {
-      floop.touching = false;
-      clearTimeout(floop.idle);
-      floop.idle = setTimeout(featuredFix, 200);
-    }, { passive: true });
-    track.addEventListener("pointerdown", function () { floop.last = Date.now(); });
-    track.addEventListener("wheel", function () { floop.last = Date.now(); }, { passive: true });
-    track.addEventListener("keydown", function (event) {
-      if (event.key === "ArrowRight") { event.preventDefault(); scrollCarousel(1); }
-      if (event.key === "ArrowLeft") { event.preventDefault(); scrollCarousel(-1); }
-    });
-    setInterval(function () {
-      if (document.hidden || floop.touching || Date.now() - floop.last < 8000) return;
-      if (track.offsetParent === null) return;
-      var r = track.getBoundingClientRect();
-      if (r.bottom < 0 || r.top > window.innerHeight) return;
-      var card = track.querySelector(".card");
-      track.scrollBy({ left: (card ? card.getBoundingClientRect().width + 14 : 280), behavior: motion() });
-    }, FEATURED_AUTO_MS);
-  }
-  window.addEventListener("resize", featuredFix);
+  bindFeaturedDrag();
 
   var tabbar = document.querySelector(".tabbar");
   var lastY = window.scrollY;
