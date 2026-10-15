@@ -4,7 +4,9 @@
    keep a comma between blocks. See HOW-TO-ADD-A-MOD.md.
    ============================================================ */
 /* Website version shown in Settings. Change this number each time you update,
-   then check Settings on your site to confirm the new version is live. */
+   then check Settings on your site to confirm the new version is live.
+   Also change ?v=... in the 3 tags at the bottom/top of index.html to the same number,
+   so phones load the new files instead of old saved ones. */
 window.AZUMC_VERSION = "1.0.1";
 
 window.AZUMC_MODS = [
@@ -158,10 +160,10 @@ window.AZUMC_MODS = [
       author: "Gao",
       summary: "Tree Capitator, Vein Miner and more in one all-in-one pack.",
       description: "Bedrock Essentials+ adds popular add-ons like Tree Capitator and Vein Miner. This is an all-in-one pack for Minecraft Bedrock Edition, and it also includes breakable mob spawners.\n\nAuto Pickup is off by default. Turn it on with /pickup enable and off with /pickup disable.\n\nAuto Tool Switch is off by default. Turn it on with /ats enable and off with /ats disable.",
-      image: "assets/mods/bedrock-essentials-plus.jpg",
+      image: "assets/mods/Bedrock-Essentials+.png",
       alt: "Bedrock Essentials+ thumbnail",
       shots: [
-        { src: "assets/mods/bedrock-essentials-plus.jpg", alt: "Bedrock Essentials+ preview" }
+        { src: "assets/mods/Bedrock-Essentials+.png", alt: "Bedrock Essentials+ preview" }
       ],
       fileSize: "29 KB",
       released: "2026-10-15",
@@ -178,13 +180,13 @@ window.AZUMC_MODS = [
       author: "Xnova Mc",
       summary: "New features, items and first-person animations with 3D items.",
       description: "Xnova Remastered adds many new features, functions and items, as well as new and improved first-person animations with 3D items.",
-      image: "assets/mods/xnova-remastered.jpg",
+      image: "assets/mods/xnova-remastered.png",
       alt: "Xnova Remastered thumbnail",
       shots: [
-        { src: "assets/mods/xnova-remastered.jpg", alt: "Xnova Remastered preview" },
-        { src: "assets/mods/xnova-remastered-1.jpg", alt: "Xnova Remastered preview" },
-        { src: "assets/mods/xnova-remastered-2.jpg", alt: "Xnova Remastered preview" },
-        { src: "assets/mods/xnova-remastered-3.jpg", alt: "Xnova Remastered preview" }
+        { src: "assets/mods/xnova-remastered.png", alt: "Xnova Remastered preview" },
+        { src: "assets/mods/xnova-remastered-1.png", alt: "Xnova Remastered preview" },
+        { src: "assets/mods/xnova-remastered-2.png", alt: "Xnova Remastered preview" },
+        { src: "assets/mods/xnova-remastered-3.png", alt: "Xnova Remastered preview" }
       ],
       fileSize: "0.83 MB",
       released: "2026-10-15",
@@ -201,10 +203,10 @@ window.AZUMC_MODS = [
       author: "Vathana",
       summary: "Turns the normal hearts into Hardcore hearts.",
       description: "Hardcore Fake Hearts makes the normal heart texture turn into the Hardcore heart.",
-      image: "assets/mods/hardcore-fake-hearts.jpg",
+      image: "assets/mods/HardcoreFakeHearts.png",
       alt: "Hardcore Fake Hearts thumbnail",
       shots: [
-        { src: "assets/mods/hardcore-fake-hearts.jpg", alt: "Hardcore Fake Hearts preview" }
+        { src: "assets/mods/HardcoreFakeHearts.png", alt: "Hardcore Fake Hearts preview" }
       ],
       fileSize: "65 KB",
       released: "2026-10-15",
@@ -221,10 +223,10 @@ window.AZUMC_MODS = [
       author: "Vathana",
       summary: "Faster, easier block placement with an in-game ON/OFF menu.",
       description: "Fast Block Place is a Minecraft Bedrock add-on designed to make block placement more convenient and easier to manage. It has a simple in-game settings menu where you can quickly turn the feature on or off.\n\nFeatures: fast block placement, quick menu access by interacting with the designated stick, ON and OFF buttons, and a clean settings screen titled Fast Block Placement Setting.\n\nHow to use: import the add-on into Minecraft Bedrock Edition, activate the packs in your world settings, enter your world, and use the designated stick to open the settings menu. Select ON to enable the feature or OFF to disable it.",
-      image: "assets/mods/fast-block-place.jpg",
+      image: "assets/mods/Fast Block Place.png",
       alt: "Fast Block Place thumbnail",
       shots: [
-        { src: "assets/mods/fast-block-place.jpg", alt: "Fast Block Place preview" }
+        { src: "assets/mods/Fast Block Place.png", alt: "Fast Block Place preview" }
       ],
       fileSize: "83 KB",
       released: "2026-10-15",
@@ -241,10 +243,10 @@ window.AZUMC_MODS = [
       author: "Vathana",
       summary: "Colorful, custom-designed pixel-art music discs.",
       description: "VATHANA Music Discs brings a fresh musical experience to Minecraft Bedrock Edition with a collection of colorful, custom-designed music discs. Featuring unique disc designs and vibrant pixel-art styles, it adds more personality and variety to your worlds.\n\nHow to use: download the file, open it to import it into Minecraft Bedrock Edition, then activate the required Behavior Pack and Resource Pack in your world settings.",
-      image: "assets/mods/vathana-music-discs.jpg",
+      image: "assets/mods/VATHANA_Music_Discs.png",
       alt: "VATHANA Music Discs thumbnail",
       shots: [
-        { src: "assets/mods/vathana-music-discs.jpg", alt: "VATHANA Music Discs preview" }
+        { src: "assets/mods/VATHANA_Music_Discs.png", alt: "VATHANA Music Discs preview" }
       ],
       fileSize: "18.87 MB",
       released: "2026-10-15",
@@ -261,10 +263,10 @@ window.AZUMC_MODS = [
       author: "Pupy200mine",
       summary: "Clearer hunger and food information on your HUD.",
       description: "AppleSkin Bedrock is a resource pack that improves the visibility of hunger-related information through a customized in-game HUD. Inspired by the AppleSkin idea, it makes food and hunger information easier to understand while you play Survival.\n\nHow to install: import the file, open your world settings, go to Resource Packs, My Packs, and activate AppleSkin Bedrock.\n\nNote: HUD changes may behave differently between Minecraft versions.",
-      image: "assets/mods/appleskin-bedrock.jpg",
+      image: "assets/mods/Appleskin_Bedrock.png",
       alt: "AppleSkin Bedrock thumbnail",
       shots: [
-        { src: "assets/mods/appleskin-bedrock.jpg", alt: "AppleSkin Bedrock preview" }
+        { src: "assets/mods/Appleskin_Bedrock.png", alt: "AppleSkin Bedrock preview" }
       ],
       fileSize: "41 KB",
       released: "2026-10-15",
