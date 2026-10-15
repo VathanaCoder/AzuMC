@@ -142,15 +142,17 @@
     return 0;
   }
 
+  /* Lowest term score decides the mod's rank (every typed word must match). */
   function scoreMod(mod, q) {
-    var total = 0;
+    if (String(mod.name).toLowerCase().indexOf(q) === 0) return 100;
     var terms = q.split(/\s+/).filter(Boolean);
+    var min = Infinity;
     for (var i = 0; i < terms.length; i++) {
       var sc = termScore(mod, terms[i]);
       if (!sc) return 0;
-      total += sc;
+      if (sc < min) min = sc;
     }
-    return total;
+    return min === Infinity ? 0 : min;
   }
 
   function filtered() {
@@ -162,6 +164,15 @@
       scored[mod.id] = scoreMod(mod, q);
       return scored[mod.id] > 0;
     });
+    /* Names that START with what you typed come first and hide everything else.
+       If none start with it, names with a word that starts with it are shown.
+       Creator, category, version and description are used only when no name matches. */
+    if (q) {
+      var starts = list.filter(function (mod) { return scored[mod.id] >= 100; });
+      var words = list.filter(function (mod) { return scored[mod.id] >= 80; });
+      if (starts.length) list = starts;
+      else if (words.length) list = words;
+    }
     if (state.sort === "oldest") list.sort(function (a, b) { return byDate(b, a); });
     else if (state.sort === "name") list.sort(function (a, b) { return a.name.localeCompare(b.name); });
     else if (state.sort === "relevance" && q) list.sort(function (a, b) { return (scored[b.id] - scored[a.id]) || byDate(a, b); });
@@ -262,7 +273,7 @@
     updateCarousel();
     fillShelf("home-recommended", recommended, "catalog");
     fillShelf("home-horror", horror, horror.length === 1 ? "wide" : "catalog");
-    fillShelf("home-packs", packs, "catalog");
+    fillShelf("home-packs", packs.slice(0, 4), "catalog");
     fillShelf("home-latest", latest, "row");
 
     CATEGORIES.forEach(function (cat) {
@@ -360,49 +371,20 @@
       '<section class="task-panel download-panel">' +
         "<h3>Download</h3>" +
         "<p>" + esc(mod.name) + " · " + esc(mod.fileSize) + " · " + esc(plan.file.ext) + "</p>" +
-        '<button type="button" class="btn" data-download>Download</button>' +
-        '<div class="progress" hidden><span></span></div>' +
+        '<a class="btn" data-download href="' + esc(plan.file.url) + '" download="' + esc(fileName) + '">Download</a>' +
         '<p class="timer-status" role="status"></p>' +
       "</section>";
     var btn = el.querySelector("[data-download]");
-    var bar = el.querySelector(".progress");
-    var barSpan = bar.querySelector("span");
     var status = el.querySelector(".timer-status");
-    var raf = 0;
+    /* The link downloads straight away on tap (no delay). We only check afterwards
+       that the file really exists on the site, so a wrong file name is easy to spot. */
     btn.addEventListener("click", function () {
-      if (btn.dataset.running === "1") return;
-      btn.dataset.running = "1";
-      btn.disabled = true;
-      btn.textContent = "Preparing…";
-      bar.hidden = false;
-      barSpan.style.transform = "scaleX(0)";
-      var duration = Math.max(1, plan.prepareSeconds) * 1000;
-      var startAt = 0;
-      var ease = function (t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
-
-      function frame(now) {
-        if (!startAt) startAt = now;
-        var t = Math.min(1, (now - startAt) / duration);
-        var p = ease(t);
-        barSpan.style.transform = "scaleX(" + p.toFixed(4) + ")";
-        var pct = Math.round(p * 100);
-        status.textContent = (p < 0.4 ? "Preparing your download…" : p < 0.85 ? "Packing your file…" : "Almost ready…") + " " + pct + "%";
-        if (t < 1) { raf = requestAnimationFrame(frame); return; }
-        var link = document.createElement("a");
-        link.href = plan.file.url;
-        link.download = fileName;
-        link.rel = "noopener";
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        status.textContent = "Your download has started.";
-        btn.textContent = "Download again";
-        btn.disabled = false;
-        btn.dataset.running = "0";
-        setTimeout(function () { bar.hidden = true; barSpan.style.transform = "scaleX(0)"; }, 1200);
-      }
-      raf = requestAnimationFrame(frame);
-      downloadTimers.push({ cancel: function () { cancelAnimationFrame(raf); } });
+      status.textContent = "Download started. Check your downloads.";
+      btn.textContent = "Download again";
+      if (location.protocol.indexOf("http") !== 0 || !window.fetch) return;
+      fetch(plan.file.url, { method: "HEAD", cache: "no-store" }).then(function (res) {
+        if (!res.ok) status.textContent = "File not found: " + plan.file.url + ". Check the file name in the downloads folder.";
+      }).catch(function () {});
     });
   }
 
@@ -901,6 +883,10 @@
   });
 
   renderHero();
+  var verEl = document.getElementById("app-version");
+  if (verEl) verEl.textContent = window.AZUMC_VERSION ? String(window.AZUMC_VERSION) : "1.0.0";
+  var countEl = document.getElementById("app-mod-count");
+  if (countEl) countEl.textContent = String(MODS.length);
   renderHome();
   updateChips();
   renderSearch();

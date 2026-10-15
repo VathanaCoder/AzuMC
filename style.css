@@ -1154,3 +1154,14 @@ html[data-theme="light"] .section-tint { background: color-mix(in srgb, var(--su
 }
 
 .chip[hidden] { display: none; }
+
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 14px;
+  font-weight: 650;
+}
+.info-row small { color: var(--muted); font-weight: 550; font-variant-numeric: tabular-nums; }
