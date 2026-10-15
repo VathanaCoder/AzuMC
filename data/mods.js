@@ -5,7 +5,7 @@
    ============================================================ */
 /* Website version shown in Settings. Change this number each time you update,
    then check Settings on your site to confirm the new version is live. */
-window.AZUMC_VERSION = "1.0.0";
+window.AZUMC_VERSION = "1.0.1";
 
 window.AZUMC_MODS = [
     {
