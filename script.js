@@ -422,10 +422,13 @@
       '<div class="prose">' + paragraphs + "</div>" +
       '<div id="download-slot"></div>' +
       '<div class="gallery-head"><h2>Screenshots</h2><p class="gallery-note">Preview art.</p></div>' +
-      '<div class="gallery-track">' + shots + "</div>" +
+      '<div class="gallery-view"><div class="gallery-track">' + shots + "</div></div>" +
       '<div class="related"><h2>Related mods</h2><div class="mod-grid">' + more.map(function (item) { return cardHTML(item, "catalog"); }).join("") + "</div></div>";
     bindImages(root);
     renderDownloadSlot(root.querySelector("#download-slot"), mod);
+    var gView = root.querySelector(".gallery-view");
+    var gTrack = root.querySelector(".gallery-track");
+    if (gView && gTrack && gTrack.children.length > 1) createSlider(gView, gTrack, false);
     document.title = mod.name + " — AzuMC";
   }
 
@@ -565,8 +568,7 @@
       if (input) input.value = state.query;
       syncSearch(null);
       setCategory(state.category);
-      var sort = document.getElementById("sort-select");
-      if (sort) sort.value = state.sort;
+      setSelectValue("sort", state.sort);
     }
     var reduce = motion() === "auto";
     if (route.scroll) {
@@ -681,10 +683,16 @@
     return list;
   }
 
-  /* ---- Featured: loops forever, moves exactly ONE card at a time, slowly ---- */
+  /* ---- Sliders (Featured + Screenshots): loop forever, ONE card at a time, speed from Settings ---- */
   var FEATURED_AUTO_MS = 15000;
-  var FEATURED_SLIDE_MS = 200;
-  var fc = { busy: false, dragging: false, justDragged: false, last: 0 };
+  var SPEED_KEY = "azumc-slide-speed";
+  var SPEEDS = ["0.01", "0.05", "0.10", "0.20", "0.30", "0.40", "0.50"];
+  var slideSeconds = "0.20";
+  try { var savedSpeed = localStorage.getItem(SPEED_KEY); if (SPEEDS.indexOf(savedSpeed) !== -1) slideSeconds = savedSpeed; } catch (e) {}
+  var SLIDE_EASE = "cubic-bezier(0.45, 0, 0.2, 1)";
+  var featuredSlider = null;
+
+  function slideMs() { return motion() === "auto" ? 0 : Math.round(parseFloat(slideSeconds) * 1000); }
 
   function featuredTrack() { return document.getElementById("featured-track"); }
 
@@ -700,41 +708,6 @@
     bindImages(track);
   }
 
-  function featuredStep(track) {
-    if (track.offsetParent === null || track.children.length < 2) return 0;
-    return track.children[1].offsetLeft - track.children[0].offsetLeft;
-  }
-
-  function featuredMs() { return motion() === "auto" ? 0 : FEATURED_SLIDE_MS; }
-  var FEATURED_EASE = "cubic-bezier(0.45, 0, 0.2, 1)";
-
-  /* dir +1 = next card (slides left), -1 = previous card (slides right). */
-  function featuredSlide(dir) {
-    var track = featuredTrack();
-    if (!track || fc.busy || fc.dragging) return;
-    var step = featuredStep(track);
-    if (!step) return;
-    fc.busy = true;
-    fc.last = Date.now();
-    var ms = featuredMs();
-    if (dir < 0) {
-      track.style.transition = "none";
-      track.insertBefore(track.lastElementChild, track.firstElementChild);
-      track.style.transform = "translateX(" + (-step) + "px)";
-      void track.offsetWidth;
-    }
-    track.style.transition = ms ? "transform " + ms + "ms " + FEATURED_EASE : "none";
-    track.style.transform = dir > 0 ? "translateX(" + (-step) + "px)" : "translateX(0)";
-    setTimeout(function () {
-      if (dir > 0) {
-        track.style.transition = "none";
-        track.appendChild(track.firstElementChild);
-        track.style.transform = "translateX(0)";
-      }
-      fc.busy = false;
-    }, ms + 40);
-  }
-
   function updateCarousel() {
     var prev = document.querySelector("[data-carousel='-1']");
     var next = document.querySelector("[data-carousel='1']");
@@ -742,29 +715,65 @@
     if (next) next.disabled = false;
   }
 
-  function scrollCarousel(dir) { featuredSlide(dir); }
+  function scrollCarousel(dir) { if (featuredSlider) featuredSlider.slide(dir); }
 
-  function bindFeaturedDrag() {
-    var view = document.querySelector(".carousel-viewport");
-    var track = featuredTrack();
-    if (!view || !track) return;
+  function createSlider(view, track, auto) {
+    var st = { busy: false, dragging: false, justDragged: false, last: 0, finish: null, timer: 0 };
+
+    function stepSize() {
+      if (track.offsetParent === null || track.children.length < 2) return 0;
+      return track.children[1].offsetLeft - track.children[0].offsetLeft;
+    }
+
+    /* dir +1 = next card (slides left), -1 = previous. No cooldown: a moving slide finishes instantly. */
+    function slide(dir) {
+      if (st.dragging) return;
+      if (st.busy) { if (st.finish) st.finish(); else return; }
+      var step = stepSize();
+      if (!step) return;
+      st.busy = true;
+      st.last = Date.now();
+      var ms = slideMs();
+      track.style.transition = "none";
+      if (dir < 0) {
+        track.insertBefore(track.lastElementChild, track.firstElementChild);
+        track.style.transform = "translateX(" + (-step) + "px)";
+      } else {
+        track.style.transform = "translateX(0)";
+      }
+      void track.offsetWidth;
+      var finish = function () {
+        clearTimeout(st.timer);
+        st.finish = null;
+        track.style.transition = "none";
+        if (dir > 0) track.appendChild(track.firstElementChild);
+        track.style.transform = "translateX(0)";
+        st.busy = false;
+      };
+      st.finish = finish;
+      track.style.transition = ms ? "transform " + ms + "ms " + SLIDE_EASE : "none";
+      track.style.transform = dir > 0 ? "translateX(" + (-step) + "px)" : "translateX(0)";
+      st.timer = setTimeout(finish, ms + 30);
+    }
+
     var startX = 0, startY = 0, dx = 0, startT = 0, active = false, pid = null, base = 0, step = 0;
 
     view.addEventListener("pointerdown", function (e) {
-      if (fc.busy || (e.pointerType === "mouse" && e.button !== 0)) return;
-      active = true; fc.dragging = false; dx = 0; base = 0;
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      if (st.busy) { if (st.finish) st.finish(); else return; }
+      active = true; st.dragging = false; dx = 0; base = 0;
       startX = e.clientX; startY = e.clientY; startT = Date.now(); pid = e.pointerId;
-      fc.last = Date.now();
+      st.last = Date.now();
     });
 
     view.addEventListener("pointermove", function (e) {
       if (!active || e.pointerId !== pid) return;
       dx = e.clientX - startX;
       var dy = e.clientY - startY;
-      if (!fc.dragging) {
+      if (!st.dragging) {
         if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy)) return;
-        fc.dragging = true;
-        step = featuredStep(track);
+        st.dragging = true;
+        step = stepSize();
         try { view.setPointerCapture(pid); } catch (err) {}
         track.style.transition = "none";
       }
@@ -783,50 +792,137 @@
     function end(e) {
       if (!active || (e && e.pointerId !== pid)) return;
       active = false;
-      if (!fc.dragging) return;
-      fc.dragging = false;
-      fc.justDragged = true;
-      setTimeout(function () { fc.justDragged = false; }, 80);
-      fc.last = Date.now();
+      if (!st.dragging) return;
+      st.dragging = false;
+      st.justDragged = true;
+      setTimeout(function () { st.justDragged = false; }, 80);
+      st.last = Date.now();
       var moved = Math.abs(Math.max(-step, Math.min(step, dx)));
       var fast = Math.abs(dx) / Math.max(1, Date.now() - startT) > 0.45 && Math.abs(dx) > 24;
       var commit = moved > step * 0.25 || fast;
-      var ms = featuredMs();
-      fc.busy = true;
-      track.style.transition = ms ? "transform " + Math.round(ms * 0.7) + "ms " + FEATURED_EASE : "none";
-      if (base === 0) {
-        track.style.transform = commit ? "translateX(" + (-step) + "px)" : "translateX(0)";
-      } else {
-        track.style.transform = commit ? "translateX(0)" : "translateX(" + (-step) + "px)";
-      }
-      setTimeout(function () {
+      var ms = Math.round(slideMs() * 0.7);
+      var wasBase = base;
+      st.busy = true;
+      track.style.transition = ms ? "transform " + ms + "ms " + SLIDE_EASE : "none";
+      if (wasBase === 0) track.style.transform = commit ? "translateX(" + (-step) + "px)" : "translateX(0)";
+      else track.style.transform = commit ? "translateX(0)" : "translateX(" + (-step) + "px)";
+      var finish = function () {
+        clearTimeout(st.timer);
+        st.finish = null;
         track.style.transition = "none";
-        if (base === 0 && commit) track.appendChild(track.firstElementChild);
-        if (base !== 0 && !commit) track.appendChild(track.firstElementChild);
+        if (wasBase === 0 && commit) track.appendChild(track.firstElementChild);
+        if (wasBase !== 0 && !commit) track.appendChild(track.firstElementChild);
         track.style.transform = "translateX(0)";
-        fc.busy = false;
-      }, Math.round(ms * 0.7) + 40);
+        st.busy = false;
+      };
+      st.finish = finish;
+      st.timer = setTimeout(finish, ms + 30);
     }
     view.addEventListener("pointerup", end);
     view.addEventListener("pointercancel", end);
     view.addEventListener("dragstart", function (e) { e.preventDefault(); });
     view.addEventListener("click", function (e) {
-      if (fc.justDragged) { e.preventDefault(); e.stopPropagation(); }
+      if (st.justDragged) { e.preventDefault(); e.stopPropagation(); }
     }, true);
     view.addEventListener("keydown", function (event) {
-      if (event.key === "ArrowRight") { event.preventDefault(); featuredSlide(1); }
-      if (event.key === "ArrowLeft") { event.preventDefault(); featuredSlide(-1); }
+      if (event.key === "ArrowRight") { event.preventDefault(); slide(1); }
+      if (event.key === "ArrowLeft") { event.preventDefault(); slide(-1); }
     });
-    view.addEventListener("wheel", function () { fc.last = Date.now(); }, { passive: true });
 
-    setInterval(function () {
-      if (document.hidden || fc.dragging || fc.busy || Date.now() - fc.last < 8000) return;
-      if (track.offsetParent === null) return;
-      var r = view.getBoundingClientRect();
-      if (r.bottom < 0 || r.top > window.innerHeight) return;
-      featuredSlide(1);
-    }, FEATURED_AUTO_MS);
+    if (auto) {
+      setInterval(function () {
+        if (document.hidden || st.dragging || st.busy || Date.now() - st.last < 8000) return;
+        if (track.offsetParent === null) return;
+        var r = view.getBoundingClientRect();
+        if (r.bottom < 0 || r.top > window.innerHeight) return;
+        slide(1);
+      }, FEATURED_AUTO_MS);
+    }
+    return { slide: slide };
   }
+
+  /* ---- Custom dropdowns (our own menu instead of the phone's default one) ---- */
+  function selectRoot(id) { return document.querySelector('[data-select="' + id + '"]'); }
+
+  function setSelectValue(id, value) {
+    var el = selectRoot(id);
+    if (!el) return;
+    el.setAttribute("data-value", value);
+    el.querySelectorAll('[role="option"]').forEach(function (opt) {
+      var on = opt.getAttribute("data-value") === value;
+      opt.setAttribute("aria-selected", on ? "true" : "false");
+      if (on) el.querySelector(".select-label").textContent = opt.textContent;
+    });
+  }
+
+  function closeSelects(except) {
+    document.querySelectorAll(".select.is-open").forEach(function (el) {
+      if (el === except) return;
+      el.classList.remove("is-open", "is-up");
+      el.querySelector(".select-btn").setAttribute("aria-expanded", "false");
+      el.querySelector(".select-menu").hidden = true;
+    });
+  }
+
+  function openSelect(el) {
+    closeSelects(el);
+    var menu = el.querySelector(".select-menu");
+    menu.hidden = false;
+    el.classList.add("is-open");
+    el.querySelector(".select-btn").setAttribute("aria-expanded", "true");
+    var r = el.getBoundingClientRect();
+    var room = window.innerHeight - r.bottom - 96;
+    el.classList.toggle("is-up", room < menu.offsetHeight && r.top > menu.offsetHeight + 80);
+    var selected = menu.querySelector('[aria-selected="true"]');
+    if (selected) selected.scrollIntoView({ block: "nearest" });
+  }
+
+  function chooseSelect(el, opt) {
+    var id = el.getAttribute("data-select");
+    var value = opt.getAttribute("data-value");
+    setSelectValue(id, value);
+    closeSelects();
+    el.querySelector(".select-btn").focus({ preventScroll: true });
+    if (id === "sort") { state.sort = value; renderSearch(); }
+    if (id === "speed") {
+      slideSeconds = value;
+      try { localStorage.setItem(SPEED_KEY, value); } catch (e) {}
+    }
+  }
+
+  document.addEventListener("click", function (event) {
+    var btn = event.target.closest(".select-btn");
+    if (btn) {
+      var el = btn.closest(".select");
+      if (el.classList.contains("is-open")) closeSelects(); else openSelect(el);
+      return;
+    }
+    var opt = event.target.closest('.select [role="option"]');
+    if (opt) { chooseSelect(opt.closest(".select"), opt); return; }
+    closeSelects();
+  });
+
+  document.addEventListener("keydown", function (event) {
+    var el = event.target.closest && event.target.closest(".select");
+    if (!el) return;
+    var open = el.classList.contains("is-open");
+    var opts = Array.prototype.slice.call(el.querySelectorAll('[role="option"]'));
+    if (event.key === "Escape" && open) {
+      event.preventDefault(); event.stopPropagation();
+      closeSelects();
+      el.querySelector(".select-btn").focus();
+    } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      if (!open) { openSelect(el); }
+      var i = opts.indexOf(document.activeElement);
+      if (i === -1) i = opts.findIndex(function (o) { return o.getAttribute("aria-selected") === "true"; });
+      i = event.key === "ArrowDown" ? Math.min(opts.length - 1, i + 1) : Math.max(0, i - 1);
+      opts[i].focus();
+    } else if ((event.key === "Enter" || event.key === " ") && event.target.getAttribute("role") === "option") {
+      event.preventDefault();
+      chooseSelect(el, event.target);
+    }
+  }, true);
 
   function toggleFav(id) {
     if (favs.has(id)) favs.delete(id);
@@ -949,11 +1045,6 @@
   });
 
   root.addEventListener("input", function (event) {
-    if (event.target.id === "sort-select") {
-      state.sort = event.target.value;
-      renderSearch();
-      return;
-    }
     if (event.target.id !== "search-input") return;
     state.query = event.target.value;
     syncSearch(event.target);
@@ -971,7 +1062,8 @@
     }
   });
 
-  bindFeaturedDrag();
+  var featuredView = document.querySelector(".carousel-viewport");
+  if (featuredView && featuredTrack()) featuredSlider = createSlider(featuredView, featuredTrack(), true);
 
   var tabbar = document.querySelector(".tabbar");
   var lastY = window.scrollY;
@@ -1012,6 +1104,8 @@
     if (now - lastTouchEnd <= 300) e.preventDefault();
     lastTouchEnd = now;
   }, { passive: false });
+  setSelectValue("speed", slideSeconds);
+  setSelectValue("sort", state.sort);
   var verEl = document.getElementById("app-version");
   if (verEl) verEl.textContent = window.AZUMC_VERSION ? String(window.AZUMC_VERSION) : "1.0.0";
   var countEl = document.getElementById("app-mod-count");

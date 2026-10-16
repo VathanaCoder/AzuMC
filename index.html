@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=1.0.5">
+  <link rel="stylesheet" href="style.css?v=1.0.6">
 </head>
 <body>
   <div id="azumc">
@@ -179,15 +179,18 @@
           </div>
           <div class="search-toolbar">
             <p id="result-count" class="result-count"></p>
-            <label class="sort-field">
+            <div class="sort-field">
               <span>Sort</span>
-              <select id="sort-select" aria-label="Sort results">
-                <option value="relevance">Best match</option>
-                <option value="newest">Newest</option>
-                <option value="oldest">Oldest</option>
-                <option value="name">Name A–Z</option>
-              </select>
-            </label>
+              <div class="select" data-select="sort" data-value="relevance">
+              <button type="button" class="select-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Sort results"><span class="select-label">Best match</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <ul class="select-menu" role="listbox" aria-label="Sort results" hidden>
+                <li role="option" tabindex="-1" data-value="relevance" aria-selected="true">Best match</li>
+                <li role="option" tabindex="-1" data-value="newest" aria-selected="false">Newest</li>
+                <li role="option" tabindex="-1" data-value="oldest" aria-selected="false">Oldest</li>
+                <li role="option" tabindex="-1" data-value="name" aria-selected="false">Name A–Z</li>
+              </ul>
+            </div>
+            </div>
             <button type="button" class="btn btn-ghost btn-sm" data-reset hidden id="reset-btn">Clear all</button>
           </div>
           <p id="results-live" class="sr-only" aria-live="polite"></p>
@@ -227,6 +230,24 @@
               <span class="swatch swatch-light" aria-hidden="true"></span>
               <span><strong>Light</strong><small>White surfaces, navy text</small></span>
             </button>
+          </div>
+          <h2 class="block-title">Sliders</h2>
+          <div class="pref-card">
+            <div class="pref-row">
+              <div><strong>Slide speed</strong><small>Featured cards and screenshots</small></div>
+              <div class="select" data-select="speed" data-value="0.20">
+              <button type="button" class="select-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Slide speed"><span class="select-label">0.20 s</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <ul class="select-menu" role="listbox" aria-label="Slide speed" hidden>
+                <li role="option" tabindex="-1" data-value="0.01" aria-selected="false">0.01 s</li>
+                <li role="option" tabindex="-1" data-value="0.05" aria-selected="false">0.05 s</li>
+                <li role="option" tabindex="-1" data-value="0.10" aria-selected="false">0.10 s</li>
+                <li role="option" tabindex="-1" data-value="0.20" aria-selected="true">0.20 s</li>
+                <li role="option" tabindex="-1" data-value="0.30" aria-selected="false">0.30 s</li>
+                <li role="option" tabindex="-1" data-value="0.40" aria-selected="false">0.40 s</li>
+                <li role="option" tabindex="-1" data-value="0.50" aria-selected="false">0.50 s</li>
+              </ul>
+            </div>
+            </div>
           </div>
           <h2 class="block-title">Information</h2>
           <ul class="link-list">
@@ -377,7 +398,7 @@
       <p class="noscript">AzuMC needs JavaScript for search, favorites, and mod details.</p>
     </noscript>
   </div>
-  <script src="data/mods.js?v=1.0.5"></script>
-  <script src="script.js?v=1.0.5"></script>
+  <script src="data/mods.js?v=1.0.6"></script>
+  <script src="script.js?v=1.0.6"></script>
 </body>
 </html>

@@ -694,17 +694,16 @@ html[data-theme="light"] .fav {
 .demo-lead { margin-top: 4px; font-weight: 700; color: var(--text); }
 
 .gallery-head { margin: 22px 0 10px; }
+.gallery-view { overflow: hidden; touch-action: pan-y; }
 .gallery-track {
   display: flex;
   gap: 12px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
+  will-change: transform;
+  user-select: none;
+  -webkit-user-select: none;
 }
-.gallery-track::-webkit-scrollbar { display: none; }
 .shot {
   flex: 0 0 min(100%, 520px);
-  scroll-snap-align: start;
   border: 0;
   padding: 0;
   border-radius: 12px;
@@ -1062,7 +1061,7 @@ html[data-theme="light"] .fav, .fav { color: var(--text); }
 .cat-row { padding: 8px 12px 16px; margin-inline: -12px; scroll-padding-left: 12px; }
 .hero-card > div { padding-right: 44px; }
 .chips { padding: 8px 12px 16px; margin-inline: -12px; }
-.gallery-track { padding: 6px 12px 16px; margin-inline: -12px; scroll-padding-left: 12px; }
+.gallery-view { padding: 6px 12px 16px; margin-inline: -12px; }
 
 /* ---- Home / Search split ---- */
 
@@ -1197,3 +1196,68 @@ html[data-theme="light"] .section-tint { background: color-mix(in srgb, var(--su
   .hero-actions { justify-content: center; }
   .brand-top { width: min(560px, 100%); }
 }
+
+/* Our own dropdown menu */
+.select { position: relative; display: inline-block; }
+.select-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 38px;
+  min-width: 104px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: var(--raise-sm);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+.select-btn svg { width: 16px; height: 16px; color: var(--muted); transition: transform 0.2s ease; }
+.select.is-open .select-btn svg { transform: rotate(180deg); }
+.select-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 60;
+  min-width: 100%;
+  width: max-content;
+  max-height: min(320px, 50vh);
+  overflow-y: auto;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--raise);
+  animation: rise 0.18s ease both;
+}
+.select-menu[hidden] { display: none; }
+.select.is-up .select-menu { top: auto; bottom: calc(100% + 8px); }
+.select-menu li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: 10px;
+  color: var(--text);
+  font-weight: 650;
+  cursor: pointer;
+  outline: none;
+}
+.select-menu li:hover, .select-menu li:focus-visible { background: var(--soft); }
+.select-menu li[aria-selected="true"] { color: var(--azure-strong); }
+.select-menu li[aria-selected="true"]::after { content: "✓"; font-weight: 800; }
+.sort-field { position: relative; z-index: 5; }
+
+/* Settings: slide speed row (no overflow clipping so the menu can open) */
+.pref-card { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.pref-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 64px; padding: 10px 14px; }
+.pref-row strong { display: block; font-weight: 650; }
+.pref-row small { display: block; color: var(--muted); font-weight: 550; }
